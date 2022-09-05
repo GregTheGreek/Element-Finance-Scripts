@@ -24,6 +24,7 @@ async function proposal() {
   const timelockInterface = new ethers.utils.Interface(timelockData.abi);
 
   // New Params
+  const totalElfi = 1000000; // 1m ELFI
   const amountPastTerms = 0; // amount of ELFI to be sent to the terms that have already expired (standard airdrop)
   const amountFutureTerms = 0; // amountn of ELFI to be sent to the terms that have not yet started (shushi contract)
   const airdropContractAddress = ""; // rewards contract for past terms

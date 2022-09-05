@@ -39,8 +39,8 @@ async function proposal() {
    * 4. Call core voting with the encoded data
    */
 
-  // Create calldata for the proposal
   /** 
+   * Create calldata for the proposal
    * Notes:
    * - This is the maint part of the proposal, it dictates what the dao will be modifying etc...
    * - Take the function you want to call and encode it, with the correct parameters
@@ -49,10 +49,10 @@ async function proposal() {
   /** EXAMPLE please modify accordingly*/
   const callData = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, 100, 0x0000000000000000000000000000]);
 
-  // Take the calldata and convert it to the callhash.
-  // Param BytesLike[] - An arrary of encoded calldata
-  // Param string[] - An array of addresses, index must match that from the first parameter
   /**
+   * Take the calldata and convert it to the callhash.
+   * Param BytesLike[] - An arrary of encoded calldata
+   * Param string[] - An array of addresses, index must match that from the first parameter
    * Notes:
    * - You can pass in as many "chained calls" as you like, just match the calldata to the addresses in the two parameters.
    */
@@ -61,8 +61,8 @@ async function proposal() {
     [addresses.Treasury] // Both target treasury to move funds
   );
 
-  // Encode proposal to be sent to the core voting contract
   /**
+   * Encode proposal to be sent to the core voting contract
    * Notes:
    * - Simple add the multiple call hashes into the array.
    * - You can have multiple callHashes, if a proposal affects multiple different vaults or other DAO contracts.
@@ -72,8 +72,10 @@ async function proposal() {
     callHash,
   ]);
 
-  // Creates the expiery for the proposal, no need to modify.
-  // Default: xxxx
+  /**
+   * Creates the expiery for the proposal, no need to modify.
+   * Default: xxxx
+   */
   const expiryDate = 15378000; // TODO change to something automatic.
 
   /**
