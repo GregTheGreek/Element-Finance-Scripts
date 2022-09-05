@@ -1,7 +1,7 @@
 // get required contract artifacts by compiling
-import timelockData from "../../artifacts/contracts/features/Timelock.sol/Timelock.json";
-import coreVotingData from "../../artifacts/contracts/CoreVoting.sol/CoreVoting.json";
-import { CoreVoting__factory } from "../../typechain/factories/CoreVoting__factory";
+import timelockData from "../artifacts/contracts/features/Timelock.sol/Timelock.json";
+import coreVotingData from "../artifacts/contracts/CoreVoting.sol/CoreVoting.json";
+import { CoreVoting__factory } from "../typechain/factories/CoreVoting__factory";
 
 import { ethers } from "ethers";
 import { BytesLike } from "ethers";

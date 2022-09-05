@@ -1,4 +1,4 @@
-import {ethers} from "ethers";
+import {BytesLike, ethers} from "ethers";
 
 // helper callhash function
 export async function createCallHash(calldata: BytesLike[], targets: string[]) {

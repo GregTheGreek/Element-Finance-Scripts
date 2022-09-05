@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@ethersproject/hardware-wallets": "^5.7.0",
+    "@types/node": "^18.7.15",
     "ethers": "^5.7.0"
   }
 }
