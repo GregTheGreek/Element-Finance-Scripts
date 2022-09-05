@@ -64,12 +64,12 @@ async function proposal() {
 
   // The coreVoting contract registers the call with the timelock
   const tx = await coreVoting.proposal(
-    [addresses.FrozenLockingVaultProxy, addresses.FrozenVestingVaultProxy], 
-    ["0x", "0x"],
-    [addresses.Timelock], //timelock
-    [calldataCv],
-    expiryDate,
-    0,
+    [addresses.FrozenLockingVaultProxy, addresses.FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
+    ["0x", "0x"], // Extra data - typically 0x
+    [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
+    [calldataCv], // load in the call data
+    expiryDate, // Last call for proposal
+    0, // ballot
     // Gas Settings - TODO modify
     {
       maxFeePerGas: 110820118419,
