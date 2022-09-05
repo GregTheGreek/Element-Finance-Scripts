@@ -2,19 +2,20 @@ import { ethers } from "ethers";
 import { LedgerSigner } from "@ethersproject/hardware-wallets";
 
 // Artifacts
-import timelockData from "../artifacts/contracts/features/Timelock.sol/Timelock.json";
-import treasuryData from "../artifacts/contracts/features/Treasury.sol/Treasury.json";
-import coreVotingData from "../artifacts/contracts/CoreVoting.sol/CoreVoting.json";
-import { CoreVoting__factory } from "../typechain/factories/CoreVoting__factory";
+import timelockData from "../../artifacts/contracts/features/Timelock.sol/Timelock.json";
+import treasuryData from "../../artifacts/contracts/features/Treasury.sol/Treasury.json";
+import coreVotingData from "../../artifacts/contracts/CoreVoting.sol/CoreVoting.json";
+import { CoreVoting__factory } from "../../typechain/factories/CoreVoting__factory";
 
 // Helpers
-import * as addresses from "./helpers/addresses";
-import {createCallHash} from "./helpers/hashing";
+import * as addresses from "../helpers/addresses";
+import {createCallHash} from "../helpers/hashing";
 
 async function proposal() {
   // Setup your signer
   // Using a ledger, connect to metamask
-  const provider = new ethers.providers.JsonRpcProvider("<redacted>");
+  const providerUrl = "";
+  const provider = new ethers.providers.JsonRpcProvider(providerUrl);
   const signer = new LedgerSigner(provider, undefined, "m/44'/60'/3'/0/0");
   
   // Setup your interfaces
@@ -69,7 +70,7 @@ async function proposal() {
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryDate, // Last call for proposal
-    0, // ballot
+    0, // This is your vote. change if you please.
     // Gas Settings - TODO modify
     {
       maxFeePerGas: 110820118419,
