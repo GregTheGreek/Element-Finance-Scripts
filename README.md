@@ -20,3 +20,4 @@ This repository contains a collection of scripts that are used to execute EGP (E
 1. `yarn run new-egp <egp_number>`
 2. Navigate to `./egps/egp-<number>/`
 3. Write core logic in `egp-<number>.ts` and place any helper files in that directory (documentation, additional contracts, etc...)
+4. If there is any unique items about how your EGP should be run, please comment them in the repsective README.md file.

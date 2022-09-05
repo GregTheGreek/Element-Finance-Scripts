@@ -7,3 +7,4 @@ dir=$base_dir/"egp"-$egp_number
 
 mkdir $dir
 cp $template $dir/"egp"-$egp_number.ts
+echo "# Additional Information" >> $dir/README.md
