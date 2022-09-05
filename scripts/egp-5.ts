@@ -44,7 +44,7 @@ async function proposal() {
   // Create calldata for the proposal
   // Note: This is the maint part of the proposal, it dictates what the dao will be modifying etc...
   const calldataAirdrop = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, amountPastTerms, airdropContractAddress]);
-  const calldatafutureRewards = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, amountPastTerms, airdropContractAddress]);
+  const calldatafutureRewards = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, amountFutureTerms, futureRewardsContractAddress]);
 
   // Take the callData and convert it to the callhash
   // Param BytesLike[] - An arrary of encoded calldata
