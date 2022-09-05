@@ -14,9 +14,9 @@ This repository contains a collection of scripts that are used to execute EGP (E
 
 #### Instalation
 1. `yarn` # install packages
-2. `sh ./compile.sh` # Compiles contracts & copies artifacts to root directory.
+2. `yarn run compile` # Compiles contracts & copies artifacts to root directory.
 
 ### Creating a new EGP
-1. `sh ./new-egp.sh <egp_number>
+1. `yarn run new-egp <egp_number>`
 2. Navigate to `./egps/egp-<number>/`
 3. Write core logic in `egp-<number>.ts` and place any helper files in that directory (documentation, additional contracts, etc...)

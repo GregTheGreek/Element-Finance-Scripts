@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "compile": "sh ./scripts/compile.sh",
+    "new-egp": "sh ./scripts/new-egp.sh $2"
+  },
   "dependencies": {
     "@ethersproject/hardware-wallets": "^5.7.0",
     "@types/node": "^18.7.15",
