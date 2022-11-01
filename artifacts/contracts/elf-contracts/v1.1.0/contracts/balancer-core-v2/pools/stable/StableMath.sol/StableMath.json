@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "StableMath",
+  "sourceName": "contracts/balancer-core-v2/pools/stable/StableMath.sol",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212208a09d08cba80731dcbaf8584a8a9f958089c374c14ae8ee8d4ab238dc19a2aa364736f6c63430007010033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212208a09d08cba80731dcbaf8584a8a9f958089c374c14ae8ee8d4ab238dc19a2aa364736f6c63430007010033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
