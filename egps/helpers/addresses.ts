@@ -17,5 +17,6 @@ export const ZkAirdrop3 = "0x72D3acDAd21dF959DB2C112A0a5982d03759a154";
 export const ZkAirdrop4 = "0x508071cEEf3d24D94b6783c0808fe1A417DDa485";
 export const ZkAirdrop5 = "0x805bb52e4D9795B44C1ecd191Bd31F1D4a9C2dA5";
 export const ZkAirdrop6 = "0xb7726ee8d589fd3e74C0369aB8F08D5d847bC86A";
+export const Deployer = '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D';
 export const YearnVaultBBAUSD = "0xc5F3D11580c41cD07104e9AF154Fc6428bb93c73";
 export const TokenBBAUSD = "0xA13a9247ea42D743238089903570127DdA72fE44";
