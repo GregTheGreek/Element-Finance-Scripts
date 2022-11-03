@@ -54,7 +54,8 @@ async function proposal() {
   const _pauser = await signer.getAddress(); // authorize current signer as a pauser
   const yVaultAssetProxyFactory = new ethers.ContractFactory(
     yVaultAssetProxyInterface,
-    yVaultAssetProxyData.bytecode
+    yVaultAssetProxyData.bytecode,
+    signer
   );
   const yVaultAssetProxyContractDeployed = await yVaultAssetProxyFactory.deploy(
     vault_,
@@ -105,6 +106,7 @@ async function proposal() {
   const deauthorizetx = await yVaultAssetProxyContract.deauthorize(
     await signer.getAddress()
   );
+  await deauthorizetx.wait();
 
   /**
    * Calldata for unpausing Asset Proxy
