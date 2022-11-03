@@ -2,10 +2,10 @@ import { ethers } from "ethers";
 import { LedgerSigner } from "@ethersproject/hardware-wallets";
 
 // Artifacts
-import timelockData from "../../artifacts/contracts/features/Timelock.sol/Timelock.json";
-import treasuryData from "../../artifacts/contracts/features/Treasury.sol/Treasury.json";
-import coreVotingData from "../../artifacts/contracts/CoreVoting.sol/CoreVoting.json";
-import { CoreVoting__factory } from "../../typechain/factories/CoreVoting__factory";
+import timelockData from "../../artifacts/council/contracts/features/Timelock.sol/Timelock.json";
+import treasuryData from "../../artifacts/council/contracts/features/Treasury.sol/Treasury.json";
+import coreVotingData from "../../artifacts/council/contracts/CoreVoting.sol/CoreVoting.json";
+import { CoreVoting__factory } from "../../typechain/council/factories/CoreVoting__factory";
 
 // Helpers
 import * as addresses from "../helpers/addresses";

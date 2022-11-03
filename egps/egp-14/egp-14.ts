@@ -2,11 +2,11 @@ import { BytesLike, ethers } from "ethers";
 import { LedgerSigner } from "@ethersproject/hardware-wallets";
 
 // Artifacts
-import timelockData from "../../artifacts/contracts/features/Timelock.sol/Timelock.json";
-import treasuryData from "../../artifacts/contracts/features/Treasury.sol/Treasury.json";
-import yVaultAssetProxyData from "../../artifacts/contracts/elf-contracts/v1.1.0/contracts/YVaultAssetProxy.sol/YVaultAssetProxy.json";
-import { CoreVoting__factory } from "../../typechain/factories/CoreVoting__factory";
-import { YVaultAssetProxy__factory } from "../../typechain/elf-contracts/v1.1.0/factories/YVaultAssetProxy__factory";
+import timelockData from "../../artifacts/council/contracts/features/Timelock.sol/Timelock.json";
+import treasuryData from "../../artifacts/council/contracts/features/Treasury.sol/Treasury.json";
+import yVaultAssetProxyData from "../../artifacts/elf-contracts/contracts/YVaultAssetProxy.sol/YVaultAssetProxy.json";
+import { CoreVoting__factory } from "../../typechain/council/factories/CoreVoting__factory";
+import { YVaultAssetProxy__factory } from "../../typechain/elf-contracts/factories/YVaultAssetProxy__factory";
 
 // Helpers
 import * as addresses from "../helpers/addresses";
