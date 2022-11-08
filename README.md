@@ -12,9 +12,10 @@ This repository contains a collection of scripts that are used to execute EGP (E
 #### Prerequisites
 - node >16
 
-#### Instalation
+#### Installation
 1. `yarn` # install packages
-2. `yarn run compile` # Compiles contracts & copies artifacts to root directory.
+1. `yarn run init` # initialize submodules
+1. `yarn run compile` # Compiles contracts & copies artifacts to root directory.
 
 ### Creating a new EGP
 1. `yarn run new-egp <egp_number>`

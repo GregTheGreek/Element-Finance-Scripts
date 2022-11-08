@@ -1,0 +1,22 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "EthForceSender",
+  "sourceName": "contracts/balancer-core-v2/test/EthForceSender.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "constructor"
+    }
+  ],
+  "bytecode": "0x60806040526040516032380380603283398181016040526020811015602357600080fd5b50516001600160a01b038116fffe",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212208848a6acb8560e4af45df8d77a2924b442eeb7c02e14142172e83e0c047cb8e764736f6c63430007010033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

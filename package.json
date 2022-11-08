@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "init": "git submodule update --init",
     "compile": "sh ./scripts/compile.sh",
     "new-egp": "sh ./scripts/new-egp.sh $2"
   },
