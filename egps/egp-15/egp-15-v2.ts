@@ -38,7 +38,7 @@ async function proposal() {
    */
 
   /** Generate calldata for locking vault deposit */
-  const amount = ethers.utils.parseEther('145432.69')
+  const amount = ethers.utils.parseEther('72716.345')
   const lockingVaultCalldata = lockingVaultInterface.encodeFunctionData('deposit', [
     addresses.ComponentMultisig,
     amount,
