@@ -91,13 +91,7 @@ async function proposal() {
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryBlockNumber, // Last call for proposal
-    0, // This is your vote. change if you please.
-    // Gas Settings - TODO modify
-    {
-      maxFeePerGas: 110820118419,
-      maxPriorityFeePerGas: 2,
-      gasLimit: 5000000,
-    }
+    0 // This is your vote. change if you please.
   )
 
   // --- end main EGP logic ---
