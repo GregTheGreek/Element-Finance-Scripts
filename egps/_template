@@ -9,6 +9,7 @@ import { CoreVoting__factory } from "../../typechain/council/factories/CoreVotin
 // Helpers
 import * as addresses from "../helpers/addresses";
 import {createCallHash} from "../helpers/hashing";
+import { getExpiry } from "../helpers/expiry";
 
 async function proposal() {
   // Setup your signer
@@ -74,9 +75,9 @@ async function proposal() {
 
   /**
    * Creates the expiery for the proposal, no need to modify.
-   * Default: xxxx
+   * Default: 7 days after the proposal begins (unit is block number)
    */
-  const expiryDate = 15378000; // TODO change to something automatic.
+  const expiryDate = await getExpiry(provider);
 
   /**
    * The coreVoting contract registers the call with the timelock

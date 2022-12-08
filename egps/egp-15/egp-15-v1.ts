@@ -10,6 +10,7 @@ import { CoreVoting__factory } from '../../typechain/council/factories/CoreVotin
 // Helpers
 import * as addresses from '../helpers/addresses'
 import { createCallHash } from '../helpers/hashing'
+import { getExpiry } from '../helpers/expiry'
 
 async function proposal() {
   // Setup your signer
@@ -76,7 +77,7 @@ async function proposal() {
    * Creates the expiery for the proposal, no need to modify.
    * Default: xxxx
    */
-  const expiryDate = 15378000 // TODO change to something automatic.
+  const expiryBlockNumber = await getExpiry(provider)
 
   /**
    * The coreVoting contract registers the call with the timelock
@@ -87,7 +88,7 @@ async function proposal() {
     ['0x', '0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
-    expiryDate, // Last call for proposal
+    expiryBlockNumber, // Last call for proposal
     0, // This is your vote. change if you please.
     // Gas Settings - TODO modify
     {
