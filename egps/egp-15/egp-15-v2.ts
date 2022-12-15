@@ -32,22 +32,32 @@ async function proposal() {
 
   // --- main egp logic ---
   /**
-   * The Timelock contract has to call deposit() on the locking vault contract through the Treasury contract...
-   * 1. Generate calldata for deposit() call on locking vault
-   * 2. Generate calldata for genericCall() call on treasury
-   * 3. Generate callhash for timelock
+   * The Timelock contract has to call approve() and deposit() on the locking vault contract through the Treasury contract...
+   * 1. Generate calldata for approving the locking vault contract
+   * 2. Generate calldata for deposit() call on locking vault
+   * 3. Generate calldata for genericCall() call on treasury
+   * 4. Generate callhash for timelock
    */
 
+  /** Calculate Grant Amount */
+  const totalAmount = ethers.utils.parseEther('72716.345')
+
+  /** Generate calldata for approving the locking vault */
+  const approvalCalldata = treasuryInterface.encodeFunctionData('approve', [
+    addresses.ELFI, // _token
+    addresses.FrozenLockingVaultProxy, // _spender
+    totalAmount,
+  ])
+
   /** Generate calldata for locking vault deposit */
-  const amount = ethers.utils.parseEther('72716.345')
   const lockingVaultCalldata = lockingVaultInterface.encodeFunctionData('deposit', [
     addresses.ComponentMultisig,
-    amount,
+    totalAmount,
     addresses.ComponentDelegate,
   ])
 
   /** Generate calldata for treasury genericcall */
-  const callData = treasuryInterface.encodeFunctionData('genericCall', [
+  const genericCallCalldata = treasuryInterface.encodeFunctionData('genericCall', [
     addresses.FrozenLockingVaultProxy,
     lockingVaultCalldata,
   ])
@@ -60,8 +70,8 @@ async function proposal() {
    * - You can pass in as many "chained calls" as you like, just match the calldata to the addresses in the two parameters.
    */
   const callHash = await createCallHash(
-    [callData], // calldata
-    [addresses.Treasury] // Target treasury to move funds
+    [approvalCalldata, genericCallCalldata], // calldata
+    [addresses.Treasury, addresses.Treasury] // Target treasury to move funds
   )
 
   /**
@@ -96,9 +106,10 @@ async function proposal() {
 
   await tx.wait()
 
-  // need these 2 values to execute from the timelock after lock duration, please keep record of them.
+  // need these 3 values to execute from the timelock after lock duration, please keep record of them.
   console.log({
-    callData,
+    approvalCalldata,
+    genericCallCalldata,
     callHash,
   })
 }
