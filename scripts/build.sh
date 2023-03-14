@@ -1,12 +1,20 @@
 set -e
 
+# cleanup
+echo "cleaning..."
+npx hardhat clean
+
+# compile egp contracts
+echo "compiling egp contracts..."
+yarn
+yarn run compile
+
 # council repo
 echo "compiling council..."
 cd council
-npm install
+npm install --legacy-peer-dep
+npx hardhat clean
 npm run build
-cp -r ./artifacts/* ../artifacts/council
-cp -r ./typechain/* ../typechain/council
 
 # get back to last directory
 cd -
@@ -15,7 +23,8 @@ cd -
 echo "compiling elf-contracts..."
 cd elf-contracts
 npm install
+npx hardhat clean
 npm run load-contracts
 npm run build
-cp -r ./artifacts/* ../artifacts/elf-contracts
-cp -r ./typechain/* ../typechain/elf-contracts
+
+
