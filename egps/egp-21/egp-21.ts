@@ -1,11 +1,15 @@
-import { BytesLike, ethers } from 'ethers'
-import { LedgerSigner } from '@ethersproject/hardware-wallets'
+import { ethers, network } from 'hardhat'
 
 // Artifacts
-import timelockData from '../../artifacts/council/contracts/features/Timelock.sol/Timelock.json'
-import proxyData from '../../artifacts/council/contracts/simpleProxy.sol/SimpleProxy.json'
-import { FrozenLockingVaultProxy, FrozenVestingVaultProxy } from '../helpers/addresses'
-import { CoreVoting__factory } from '../../typechain/council/factories/CoreVoting__factory'
+import corevotingData from '../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json'
+import timelockData from '../../council/artifacts/contracts/features/Timelock.sol/Timelock.json'
+import proxyData from '../../council/artifacts/contracts/simpleProxy.sol/SimpleProxy.json'
+import {
+  FrozenLockingVaultProxy,
+  FrozenVestingVaultProxy,
+  CoreVoting,
+} from '../helpers/addresses'
+// import VAULT_ADDRESSES from './addresses-mainnet.json'
 
 // Helpers
 import * as addresses from '../helpers/addresses'
@@ -13,30 +17,35 @@ import { createCallHash } from '../helpers/hashing'
 import { getExpiry } from '../helpers/expiry'
 
 async function proposal() {
-  // Setup your signer
-  // Using a ledger, connect to metamask
-  const providerUrl = ''
-  const provider = new ethers.providers.JsonRpcProvider(providerUrl)
-  const signer = new LedgerSigner(provider, undefined, "m/44'/60'/3'/0/0")
+  // Set up wallet
+  console.log(`network: ${network.name}`)
+  const [deployer] = await ethers.getSigners()
+  console.log(`currently using address ${deployer.address}`)
 
   // Setup your interfaces
   const timelockInterface = new ethers.utils.Interface(timelockData.abi) // TimeLock is like sudo, you always need it.
   const proxyInterface = new ethers.utils.Interface(proxyData.abi)
 
-  // New Params
-  const LOCKING_VAULT_UPGRADE_ADDRESS = ''
-  const VESTING_VAULT_PROXY_ADDRESS = ''
-
   // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
-  const coreVoting = CoreVoting__factory.connect(addresses.CoreVoting, signer)
+  const coreVoting = new ethers.Contract(
+    CoreVoting,
+    corevotingData.abi,
+    deployer
+  )
 
   // --- main egp logic ---
   /**
    * 1. Upgrade the locking vault to the non-frozen contract address
    * 2. Upgrade the vesting vault to the non-frozen contract address
    */
-  const lockingVaultUpgradeCalldata = proxyInterface.encodeFunctionData('upgradeProxy', [LOCKING_VAULT_UPGRADE_ADDRESS])
-  const vestingVaultUpgradeCalldata = proxyInterface.encodeFunctionData('upgradeProxy', [VESTING_VAULT_PROXY_ADDRESS])
+  const lockingVaultUpgradeCalldata = proxyInterface.encodeFunctionData(
+    'upgradeProxy',
+    [VAULT_ADDRESSES.LockingVault]
+  )
+  const vestingVaultUpgradeCalldata = proxyInterface.encodeFunctionData(
+    'upgradeProxy',
+    [VAULT_ADDRESSES.VestingVault]
+  )
 
   /**
    * Take the calldata and convert it to the callhash.
@@ -57,13 +66,15 @@ async function proposal() {
    * - You can have multiple callHashes, if a proposal affects multiple different vaults or other DAO contracts.
    * - eg: Proposal updates a voting threshold, and moves funds from the treasury. This would be two callHashes.
    */
-  const calldataCv = timelockInterface.encodeFunctionData('registerCall', [callHash])
+  const calldataCv = timelockInterface.encodeFunctionData('registerCall', [
+    callHash,
+  ])
 
   /**
    * Creates the expiery for the proposal, no need to modify.
    * Default: 14 days after the proposal begins (unit is block number)
    */
-  const expiryDate = await getExpiry(provider, 14)
+  const expiryDate = await getExpiry(deployer.provider!, 14)
 
   /**
    * The coreVoting contract registers the call with the timelock
@@ -92,7 +103,7 @@ async function proposal() {
 }
 
 async function main() {
-  const result = await proposal()
+  await proposal()
 }
 
 main()
