@@ -75,7 +75,7 @@ async function proposal() {
 
   /**
    * Creates the expiery for the proposal, no need to modify.
-   * Default: 7 days after the proposal begins (unit is block number)
+   * Default: 14 days after the proposal begins (unit is block number)
    */
   const expiryDate = await getExpiry(provider);
 
