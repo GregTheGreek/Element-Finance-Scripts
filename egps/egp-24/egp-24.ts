@@ -28,7 +28,11 @@ async function proposal() {
   const elfi = await ethers.getContractAt('ELFI', addresses.ELFI)
 
   // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
-  const coreVoting = new ethers.Contract(addresses.CoreVoting, coreVotingData.abi, deployer)
+  const coreVoting = new ethers.Contract(
+    addresses.CoreVoting,
+    coreVotingData.abi,
+    deployer
+  )
 
   // --- main egp logic ---
   /**
@@ -38,7 +42,10 @@ async function proposal() {
    * 3. Reclaim method on AirdropReclaim contract transfers ownership back to Timelock
    */
 
-  const transferOwnershipCalldata = elfi.interface.encodeFunctionData('setOwner', [airdropReclaim.address])
+  const transferOwnershipCalldata = elfi.interface.encodeFunctionData(
+    'setOwner',
+    [airdropReclaim.address]
+  )
   const transferOwnershipTarget = elfi.address
 
   const reclaimCalldata = airdropReclaim.interface.encodeFunctionData('reclaim')
@@ -63,7 +70,9 @@ async function proposal() {
    * - You can have multiple callHashes, if a proposal affects multiple different vaults or other DAO contracts.
    * - eg: Proposal updates a voting threshold, and moves funds from the treasury. This would be two callHashes.
    */
-  const calldataCv = timelockInterface.encodeFunctionData('registerCall', [callHash])
+  const calldataCv = timelockInterface.encodeFunctionData('registerCall', [
+    callHash,
+  ])
 
   /**
    * Creates the expiery for the proposal, no need to modify.
@@ -76,8 +85,8 @@ async function proposal() {
    * - Supply all the vaults where you wish voting power to originate from.
    */
   const tx = await coreVoting.proposal(
-    [addresses.FrozenLockingVaultProxy, addresses.FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
-    ['0x', '0x'], // Extra data - typically 0x
+    [addresses.FrozenLockingVaultProxy], // Forzen vaults because all ELFI lives there
+    ['0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryDate, // Last call for proposal
