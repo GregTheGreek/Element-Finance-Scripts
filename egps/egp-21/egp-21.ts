@@ -81,8 +81,8 @@ async function proposal() {
    * - Supply all the vaults where you wish voting power to originate from.
    */
   const tx = await coreVoting.proposal(
-    [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
-    ['0x', '0x'], // Extra data - typically 0x
+    [FrozenLockingVaultProxy], // Forzen vaults because all ELFI lives there
+    ['0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryDate, // Last call for proposal
