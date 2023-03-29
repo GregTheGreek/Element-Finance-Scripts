@@ -4,12 +4,16 @@ import { LedgerSigner } from "@ethersproject/hardware-wallets";
 // Artifacts
 import timelockData from "../../artifacts/council/contracts/features/Timelock.sol/Timelock.json";
 import treasuryData from "../../artifacts/council/contracts/features/Treasury.sol/Treasury.json";
-import coreVotingData from "../../artifacts/council/contracts/CoreVoting.sol/CoreVoting.json";
+import coreVotingData from "../../artifacts/council/contracts/CoreVoting.sol/CoreVoting.json"
+import airdropData from "../../artifacts/council/contracts/features/Airdrop.sol/Airdrop.json";
 import { CoreVoting__factory } from "../../typechain/council/factories/CoreVoting__factory";
 
 // Helpers
 import * as addresses from "../helpers/addresses";
 import {createCallHash} from "../helpers/hashing";
+
+// local imports
+import {hexRoot} from "./egp5Proofs.json";
 
 async function proposal() {
   // Setup your signer
@@ -25,10 +29,8 @@ async function proposal() {
 
   // New Params
   const totalElfi = 1000000; // 1m ELFI
-  const amountPastTerms = 0; // amount of ELFI to be sent to the terms that have already expired (standard airdrop)
-  const amountFutureTerms = 0; // amountn of ELFI to be sent to the terms that have not yet started (shushi contract)
-  const airdropContractAddress = ""; // rewards contract for past terms
-  const futureRewardsContractAddress = ""; // rewards contract for future terms
+  const expiration = new Date()
+  expiration.setMonth(expiration.getMonth() + 6);
 
   // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
   const coreVoting = CoreVoting__factory.connect(
@@ -39,21 +41,35 @@ async function proposal() {
   // --- main egp logic ---
   /**
    * Steps:
-   * 1. Transfer `amountPastTerms` worth of ELFI to the `aidrop` contract.
-   * 2. Transfer `amountFutureTerms` worth of ELFI to the `futureRewards` contract.
+   * 1. Deploy airdrop contract
+   * 2. Transfer `amountPastTerms` worth of ELFI to the `aidrop` contract.
+   * 3. Transfer `amountFutureTerms` worth of ELFI to the `futureRewards` contract.
    */
+
+  // Deploy the airdrop contract
+  const airdropDeployer = new ethers.ContractFactory(
+    airdropData.abi,
+    airdropData.bytecode,
+    signer
+  );
+  const airdropContract = await airdropDeployer.deploy(
+    signer,
+    hexRoot,
+    "0x5c6D51ecBA4D8E4F20373e3ce96a62342B125D6d", // ELFI Contract address
+    expiration,
+    "0x02Bd4A3b1b95b01F2Aa61655415A5d3EAAcaafdD" // locking vault address
+  );
 
   // Create calldata for the proposal
   // Note: This is the maint part of the proposal, it dictates what the dao will be modifying etc...
-  const calldataAirdrop = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, amountPastTerms, airdropContractAddress]);
-  const calldatafutureRewards = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, amountFutureTerms, futureRewardsContractAddress]);
+  const calldataAirdrop = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, totalElfi, airdropContract.address]);
 
   // Take the callData and convert it to the callhash
   // Param BytesLike[] - An arrary of encoded calldata
   // Param string[] - An array of addresses, index must match that from the first parameter
   const callHash = await createCallHash(
-    [calldataAirdrop, calldatafutureRewards], // calldata
-    [addresses.Treasury, addresses.Treasury] // Both target treasury to move funds
+    [calldataAirdrop], // calldata
+    [addresses.Treasury] // Both target treasury to move funds
   );
 
   // Encode proposal to be sent to the core voting contract
@@ -71,13 +87,7 @@ async function proposal() {
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryDate, // Last call for proposal
-    0, // This is your vote. change if you please.
-    // Gas Settings - TODO modify
-    {
-      maxFeePerGas: 110820118419,
-      maxPriorityFeePerGas: 2,
-      gasLimit: 5000000
-    }
+    0 // This is your vote. change if you please.
   );
 
   // --- end main EGP logic ---
@@ -87,7 +97,6 @@ async function proposal() {
   // need these 2 values to execute from the timelock after lock duration
   console.log({
     calldataAirdrop, 
-    calldatafutureRewards,
     callHash
   });
 }
