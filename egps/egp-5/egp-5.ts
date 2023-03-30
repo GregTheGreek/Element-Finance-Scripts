@@ -2,10 +2,10 @@ import { ethers } from "ethers";
 import { LedgerSigner } from "@ethersproject/hardware-wallets";
 
 // Artifacts
-import timelockData from "../../artifacts/council/contracts/features/Timelock.sol/Timelock.json";
-import treasuryData from "../../artifacts/council/contracts/features/Treasury.sol/Treasury.json";
-import coreVotingData from "../../artifacts/council/contracts/CoreVoting.sol/CoreVoting.json"
-import airdropData from "../../artifacts/council/contracts/features/Airdrop.sol/Airdrop.json";
+import timelockData from "../../council/artifacts/contracts/features/Timelock.sol/Timelock.json";
+import treasuryData from "../../council/artifacts/contracts/features/Treasury.sol/Treasury.json";
+import coreVotingData from "../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json"
+import airdropData from "../../council/artifacts//contracts/features/Airdrop.sol/Airdrop.json";
 import { CoreVoting__factory } from "../../typechain/council/factories/CoreVoting__factory";
 
 // Helpers
@@ -33,7 +33,7 @@ async function proposal() {
   expiration.setMonth(expiration.getMonth() + 6);
 
   // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
-  const coreVoting = CoreVoting__factory.connect(
+  const coreVotingContract = CoreVoting__factory.connect(
     addresses.CoreVoting,
     signer
   );
@@ -53,10 +53,10 @@ async function proposal() {
     signer
   );
   const airdropContract = await airdropDeployer.deploy(
-    signer,
+    addresses.CoreVoting,
     hexRoot,
     "0x5c6D51ecBA4D8E4F20373e3ce96a62342B125D6d", // ELFI Contract address
-    expiration,
+    expiration.getTime(),
     "0x02Bd4A3b1b95b01F2Aa61655415A5d3EAAcaafdD" // locking vault address
   );
 
@@ -81,7 +81,7 @@ async function proposal() {
   const expiryDate = 15378000; // TODO change to something automatic.
 
   // The coreVoting contract registers the call with the timelock
-  const tx = await coreVoting.proposal(
+  const tx = await coreVotingContract.proposal(
     [addresses.FrozenLockingVaultProxy, addresses.FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
     ["0x", "0x"], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
