@@ -1,42 +1,38 @@
-import { ethers } from "ethers";
-import { LedgerSigner } from "@ethersproject/hardware-wallets";
+import { ethers } from 'hardhat'
 
 // Artifacts
-import timelockData from "../../council/artifacts/contracts/features/Timelock.sol/Timelock.json";
-import treasuryData from "../../council/artifacts/contracts/features/Treasury.sol/Treasury.json";
-import coreVotingData from "../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json"
-import airdropData from "../../council/artifacts//contracts/features/Airdrop.sol/Airdrop.json";
-import { CoreVoting__factory } from "../../typechain/council/factories/CoreVoting__factory";
+import timelockData from '../../council/artifacts/contracts/features/Timelock.sol/Timelock.json'
+import treasuryData from '../../council/artifacts/contracts/features/Treasury.sol/Treasury.json'
+import coreVotingData from '../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json'
+import airdropData from '../../council/artifacts/contracts/features/Airdrop.sol/Airdrop.json'
 
 // Helpers
-import * as addresses from "../helpers/addresses";
-import {createCallHash} from "../helpers/hashing";
+import * as addresses from '../helpers/addresses'
+import { createCallHash } from '../helpers/hashing'
 
 // local imports
-import {hexRoot} from "./egp5Proofs.json";
+import { hexRoot } from './egp5Proofs.json'
 
 async function proposal() {
   // Setup your signer
-  // Using a ledger, connect to metamask
-  const providerUrl = "";
-  const provider = new ethers.providers.JsonRpcProvider(providerUrl);
-  const signer = new LedgerSigner(provider, undefined, "m/44'/60'/3'/0/0");
-  
+  const [signer] = await ethers.getSigners()
+
   // Setup your interfaces
-  const coreVotingInterface = new ethers.utils.Interface(coreVotingData.abi);
-  const treasuryInterface = new ethers.utils.Interface(treasuryData.abi);
-  const timelockInterface = new ethers.utils.Interface(timelockData.abi);
+  const coreVotingInterface = new ethers.utils.Interface(coreVotingData.abi)
+  const treasuryInterface = new ethers.utils.Interface(treasuryData.abi)
+  const timelockInterface = new ethers.utils.Interface(timelockData.abi)
 
   // New Params
-  const totalElfi = 1000000; // 1m ELFI
+  const totalElfi = 1000000 // 1m ELFI
   const expiration = new Date()
-  expiration.setMonth(expiration.getMonth() + 6);
+  expiration.setMonth(expiration.getMonth() + 6)
 
   // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
-  const coreVotingContract = CoreVoting__factory.connect(
+  const coreVotingContract = new ethers.Contract(
     addresses.CoreVoting,
+    coreVotingData.abi,
     signer
-  );
+  )
 
   // --- main egp logic ---
   /**
@@ -51,18 +47,22 @@ async function proposal() {
     airdropData.abi,
     airdropData.bytecode,
     signer
-  );
+  )
   const airdropContract = await airdropDeployer.deploy(
     addresses.CoreVoting,
     hexRoot,
-    "0x5c6D51ecBA4D8E4F20373e3ce96a62342B125D6d", // ELFI Contract address
+    '0x5c6D51ecBA4D8E4F20373e3ce96a62342B125D6d', // ELFI Contract address
     expiration.getTime(),
-    "0x02Bd4A3b1b95b01F2Aa61655415A5d3EAAcaafdD" // locking vault address
-  );
+    '0x02Bd4A3b1b95b01F2Aa61655415A5d3EAAcaafdD' // locking vault address
+  )
 
   // Create calldata for the proposal
   // Note: This is the maint part of the proposal, it dictates what the dao will be modifying etc...
-  const calldataAirdrop = treasuryInterface.encodeFunctionData("sendFunds", [addresses.ELFI, totalElfi, airdropContract.address]);
+  const calldataAirdrop = treasuryInterface.encodeFunctionData('sendFunds', [
+    addresses.ELFI,
+    totalElfi,
+    airdropContract.address,
+  ])
 
   // Take the callData and convert it to the callhash
   // Param BytesLike[] - An arrary of encoded calldata
@@ -70,44 +70,44 @@ async function proposal() {
   const callHash = await createCallHash(
     [calldataAirdrop], // calldata
     [addresses.Treasury] // Both target treasury to move funds
-  );
+  )
 
   // Encode proposal to be sent to the core voting contract
-  const calldataCv = timelockInterface.encodeFunctionData("registerCall", [
+  const calldataCv = timelockInterface.encodeFunctionData('registerCall', [
     callHash,
-  ]);
+  ])
 
   // Creates the expiery for the proposal
-  const expiryDate = 15378000; // TODO change to something automatic.
+  const expiryDate = 15378000 // TODO change to something automatic.
 
   // The coreVoting contract registers the call with the timelock
   const tx = await coreVotingContract.proposal(
     [addresses.FrozenLockingVaultProxy, addresses.FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
-    ["0x", "0x"], // Extra data - typically 0x
+    ['0x', '0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryDate, // Last call for proposal
     0 // This is your vote. change if you please.
-  );
+  )
 
   // --- end main EGP logic ---
 
-  await tx.wait();
+  await tx.wait()
 
   // need these 2 values to execute from the timelock after lock duration
   console.log({
-    calldataAirdrop, 
-    callHash
-  });
+    calldataAirdrop,
+    callHash,
+  })
 }
 
 async function main() {
-  const result = await proposal();
+  const result = await proposal()
 }
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+    console.error(error)
+    process.exit(1)
+  })
