@@ -23,7 +23,8 @@ async function proposal() {
   const timelockInterface = new ethers.utils.Interface(timelockData.abi)
 
   // New Params
-  const totalElfi = 1000000 // 1m ELFI
+  const totalElfi = ethers.utils.parseEther('1000000') // 1m ELFI
+
   const expiration = new Date()
   expiration.setMonth(expiration.getMonth() + 6)
 
