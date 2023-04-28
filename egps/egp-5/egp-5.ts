@@ -9,6 +9,7 @@ import airdropData from '../../council/artifacts/contracts/features/Airdrop.sol/
 // Helpers
 import * as addresses from '../helpers/addresses'
 import { createCallHash } from '../helpers/hashing'
+import { getExpiry } from '../helpers/expiry'
 
 // local imports
 import { hexRoot } from './egp5Proofs.json'
@@ -44,25 +45,25 @@ async function proposal() {
    */
 
   // Deploy the airdrop contract
-  const airdropDeployer = new ethers.ContractFactory(
-    airdropData.abi,
-    airdropData.bytecode,
-    signer
-  )
-  const airdropContract = await airdropDeployer.deploy(
-    addresses.CoreVoting,
-    hexRoot,
-    '0x5c6D51ecBA4D8E4F20373e3ce96a62342B125D6d', // ELFI Contract address
-    expiration.getTime(),
-    '0x02Bd4A3b1b95b01F2Aa61655415A5d3EAAcaafdD' // locking vault address
-  )
+  // const airdropDeployer = new ethers.ContractFactory(
+  //   airdropData.abi,
+  //   airdropData.bytecode,
+  //   signer
+  // )
+  // const airdropContract = await airdropDeployer.deploy(
+  //   addresses.CoreVoting,
+  //   hexRoot,
+  //   '0x5c6D51ecBA4D8E4F20373e3ce96a62342B125D6d', // ELFI Contract address
+  //   expiration.getTime(),
+  //   '0x02Bd4A3b1b95b01F2Aa61655415A5d3EAAcaafdD' // locking vault address
+  // )
 
   // Create calldata for the proposal
   // Note: This is the maint part of the proposal, it dictates what the dao will be modifying etc...
   const calldataAirdrop = treasuryInterface.encodeFunctionData('sendFunds', [
     addresses.ELFI,
     totalElfi,
-    airdropContract.address,
+    addresses.EGP5Airdrop,
   ])
 
   // Take the callData and convert it to the callhash
@@ -79,7 +80,7 @@ async function proposal() {
   ])
 
   // Creates the expiery for the proposal
-  const expiryDate = 15378000 // TODO change to something automatic.
+  const expiryDate = getExpiry(ethers.provider) // TODO change to something automatic.
 
   // The coreVoting contract registers the call with the timelock
   const tx = await coreVotingContract.proposal(
@@ -99,6 +100,7 @@ async function proposal() {
   console.log({
     calldataAirdrop,
     callHash,
+    calldataCv,
   })
 }
 
