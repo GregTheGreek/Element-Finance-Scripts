@@ -1,6 +1,6 @@
 [submodule "council"]
 	path = council
-	url = https://github.com/element-fi/council
+	url = https://github.com/delvtech/council
 [submodule "elf-contracts"]
 	path = elf-contracts
-	url = https://github.com/element-fi/elf-contracts
+	url = https://github.com/delvtech/elf-contracts
