@@ -3,7 +3,8 @@ import { network, ethers } from 'hardhat'
 // Artifacts
 import iYearnVault from '../../elf-contracts/artifacts/contracts/interfaces/IYearnVault.sol/IYearnVault.json'
 import iERC20 from '../../elf-contracts/artifacts/contracts/interfaces/IERC20.sol/IERC20.json'
-import iCurvePool from '../../elf-contracts/artifacts/contracts/interfaces/ICurvePool.sol/ICurvePool.json'
+import iCurvePool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurvePool.json'
+import iCurveMetaPool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurveMetaPool.json'
 
 // Helpers
 import * as addresses from '../helpers/addresses'
@@ -98,19 +99,114 @@ async function proposal() {
     console.log("post-balance: ", postBalance)  
   }
 
-  // 1: crv3crypto -> weth
-  // 2: weth -> eth
-  const iCurvePoolContract = new ethers.Contract(
-    "0xd51a44d3fae010294c616388b506acda1bfaae46",
-    iCurvePool.abi,
-    signer
-  );
+  const crvPools = [
+    // crv3crypto -> weth
+    // curve pool = https://etherscan.io/address/0xd51a44d3fae010294c616388b506acda1bfaae46#readContract
+    // i = 2, weth = https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+    {
+        i: 2,
+        pool: '0xd51a44d3fae010294c616388b506acda1bfaae46',
+        poolType: 'plain',
+        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    },
+    // alusd3crv-f -> 3crv
+    // curve pool = https://etherscan.io/address/0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c#readContract
+    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
+    {
+        i: 1,
+        pool: '0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c',
+        poolType: 'meta',
+        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    },
+    // eurscrv -> eurs
+    // curve pool = https://etherscan.io/address/0x0ce6a5ff5217e38315f87032cf90686c96627caa#readContract
+    // i = 0, eurs = https://etherscan.io/address/0xdB25f211AB05b1c97D595516F45794528a807ad8
+    {
+        i: 0,
+        pool: '0x0ce6a5ff5217e38315f87032cf90686c96627caa',
+        poolType: 'meta',
+        withdrawn: '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+    },
+    // lusd3crv-f -> 3crv
+    // curve pool = https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca#readContract
+    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
+    {
+        i: 1,
+        pool: '0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca',
+        poolType: 'meta',
+        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    },
+    // mim-3lp3crv-f -> 3crv
+    // curve pool = https://etherscan.io/address/0x5a6a4d54456819380173272a5e8e9b9904bdf41b#readContract
+    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
+    {
+        i: 1,
+        pool: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
+        poolType: 'meta',
+        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    },
+    // stecrv -> eth
+    // curve pool = https://etherscan.io/address/0xdc24316b9ae028f1497c275eb9192a3ea0f67022#readContract
+    // i = 0, eth
+    {
+        i: 0,
+        pool: '0xdc24316b9ae028f1497c275eb9192a3ea0f67022',
+        poolType: 'meta',
+        withdrawn: 'eth',
+    },
+  ];
 
-  const tokenContract = new ethers.Contract(
-    erc20Tokens[0],
-    iERC20.abi,
-    signer
-  );
+  for (var i in crvPools) {
+    let iCurvePoolContract
+    if (crvPools[i].poolType === 'plain') {
+        iCurvePoolContract = new ethers.Contract(
+            crvPools[i].pool,
+            iCurvePool.abi,
+            signer
+        );
+    }
+
+    if (crvPools[i].poolType === 'meta') {
+        iCurvePoolContract = new ethers.Contract(
+            crvPools[i].pool,
+            iCurveMetaPool.abi,
+            signer
+        );
+    }
+
+    if (iCurvePoolContract === undefined) {
+        console.log('Configuration Error on Pool Type');
+        process.exit();
+    }
+
+    const lpTokenContract = new ethers.Contract(
+        erc20Tokens[i],
+        iERC20.abi,
+        signer
+    );
+
+    const lpBalance = await lpTokenContract.balanceOf("0x82ef450fb7f06e3294f2f19ed1713b255af0f541");
+    const amountWithdrawn = await iCurvePoolContract.calc_withdraw_one_coin(
+        lpBalance,
+        crvPools[i].i
+    );
+  
+    if (crvPools[i].withdrawn === 'eth') {
+        console.log('ETH Withdrawn: ', ethers.utils.formatUnits(amountWithdrawn, 18));
+        continue
+    }
+
+    const withdrawnTokenContract = new ethers.Contract(
+        crvPools[i].withdrawn,
+        iERC20.abi,
+        signer
+    );
+
+    const decimals = await withdrawnTokenContract.decimals();
+    const symbol = await withdrawnTokenContract.symbol();
+
+    console.log(symbol, ' Withdrawn: ', ethers.utils.formatUnits(amountWithdrawn, decimals));
+  }
 }
 
 async function main() {
