@@ -4,7 +4,14 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-interface ICurvePool {
+interface iCurvePool {
+    function calc_withdraw_one_coin(
+        uint256 token_amount,
+        uint256 i
+    ) external view returns (uint256);
+}
+
+interface iCurveMetaPool {
     function calc_withdraw_one_coin(
         uint256 token_amount,
         int128 i
@@ -41,12 +48,18 @@ contract CurvelpPriceChecker is IPriceChecker {
         uint256 _minOut,
         bytes calldata _data
     ) external view override returns (bool) {
-        (uint256 _allowedSlippageInBps, int128 _i, address _pool) = abi.decode(
+        (uint256 _allowedSlippageInBps, uint256 _i, int128 _128i, address _pool) = abi.decode(
             _data,
-            (uint256, int128, address)
+            (uint256, uint256, int128, address)
         );
 
-        uint256 _expectedOut = ICurvePool(_pool).calc_withdraw_one_coin(_amountIn, _i);
+        uint256 _expectedOut;
+
+        if (_expectedOut > 0) {
+            _expectedOut = iCurvePool(_pool).calc_withdraw_one_coin(_amountIn, _i);
+        } else {
+            _expectedOut = iCurveMetaPool(_pool).calc_withdraw_one_coin(_amountIn, _128i);
+        }
 
         return
             _minOut >
