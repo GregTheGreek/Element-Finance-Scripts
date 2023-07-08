@@ -8,6 +8,7 @@ import iCurvePool from '../../elf-contracts/artifacts/contracts/interfaces/ICurv
 // Helpers
 import * as addresses from '../helpers/addresses'
 import { createCallHash } from '../helpers/hashing'
+import { CurvelpPriceChecker__factory } from '../../typechain'
 
 async function proposal() {
   // Setup your signer
@@ -25,8 +26,12 @@ async function proposal() {
     "0x82ef450fb7f06e3294f2f19ed1713b255af0f541"
   );
 
-  // First withdraw from the appropriate Yearn Vault
+  // Deploy the curve price checker
+  const factory = new CurvelpPriceChecker__factory(signer);
+  let priceChecker = await factory.deploy('Curve LP Withdraw Price Checker');
+  priceChecker = await priceChecker.deployed();
 
+  // Withdraw from the appropriate Yearn Vaults
   const yearnVaults = [
     // crv3crypto
     "0xE537B5cc158EB71037D4125BDD7538421981E6AA",
