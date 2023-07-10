@@ -8,6 +8,7 @@ import iERC20 from '../../elf-contracts/artifacts/contracts/interfaces/IERC20.so
 import iCurvePool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurvePool.json'
 import iPriceChecker from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/IPriceChecker.json'
 import iCurveMetaPool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurveMetaPool.json'
+import iMilkman from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iMilkman.json'
 
 import { yearnPools, crvPools } from "./egp-16";
 
@@ -230,7 +231,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
             const withdrawnDecimals = await withdrawnToken.decimals();
 
             console.log(
-                `Slippage on crv withdrawal should be 1% from ${ethers.utils.formatUnits(amountWithdrawn, withdrawnDecimals)} for ${withdrawnSymbol}`
+                `Slippage on curve pool withdrawal should be 1% from ${ethers.utils.formatUnits(amountWithdrawn, withdrawnDecimals)} for ${withdrawnSymbol}`
             )
     
             const pricePasses = await iPriceCheckerContract.checkPrice(
@@ -244,5 +245,54 @@ describe("Run unwinding part 1, mainnet fork", function() {
     
             assert.isTrue(pricePasses);
         }
+    })
+
+    it("sends swap events to milkman", async function() {
+        const { signer, address } = await loadFixture(priceCheckerDeployFixture);
+
+        const iMilkmanContract = new ethers.Contract(
+            '0x11C76AD590ABDFFCD980afEC9ad951B160F02797',
+            iMilkman.abi,
+            signer
+        );
+
+        for (let i in crvPools) {
+            const priceCheckerData = ethers.utils.defaultAbiCoder.encode(
+                ["uint256", "bool", "uint256", "int128", "address"],
+                // 1% slippage param
+                [100, crvPools[i].isInt128, crvPools[i].i, crvPools[i].i, crvPools[i].pool]
+            );
+
+            const lpTokenContract = new ethers.Contract(
+                yearnPools[i].withdrawn,
+                iERC20.abi,
+                signer
+            );
+            const lpBalance = await lpTokenContract.balanceOf(TREASURY_ADDRESS);
+            const lpSymbol = await lpTokenContract.symbol();
+
+            const withdrawnTokenContract = new ethers.Contract(
+                crvPools[i].withdrawn,
+                iERC20.abi,
+                signer
+            );
+            const withdrawnSymbol = await withdrawnTokenContract.symbol();
+
+            console.log(
+                `Requesting an on-chain Swap via Milkman at 1% slippage.\n`,
+                `${lpBalance} ${lpSymbol} -> ${withdrawnSymbol}`,
+            )
+
+            iMilkmanContract.requestSwapExactTokensForTokens(
+                lpBalance,
+                yearnPools[i].withdrawn,
+                crvPools[i].withdrawn,
+                TREASURY_ADDRESS,
+                address,
+                priceCheckerData
+            );
+        }
+
+        console.log("No Reverts Returned.")
     })
 })

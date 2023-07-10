@@ -5,6 +5,17 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+interface iMilkman {
+    function requestSwapExactTokensForTokens(
+        uint256 amountIn,
+        address fromToken,
+        address toToken,
+        address to,
+        address priceChecker,
+        bytes calldata priceCheckerData
+    ) external view;
+}
+
 interface iCurvePool {
     function calc_withdraw_one_coin(
         uint256 token_amount,
