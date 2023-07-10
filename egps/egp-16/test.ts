@@ -10,15 +10,13 @@ import iPriceChecker from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/I
 import iCurveMetaPool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurveMetaPool.json'
 import iMilkman from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iMilkman.json'
 
-import { yearnPools, crvPools } from "./egp-16";
+import { yearnPools, crvPools, TREASURY_ADDRESS, withdrawFromYearn, deployPriceChecker } from "./egp-16";
 
 // Helpers
 import * as addresses from '../helpers/addresses'
 import { createCallHash } from '../helpers/hashing'
 import { CurvelpPriceChecker__factory } from '../../typechain'
 import { BigNumber } from "ethers";
-
-const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
 
 // Run the test on a mainnet fork
 describe("Run unwinding part 1, mainnet fork", function() {
@@ -44,34 +42,13 @@ describe("Run unwinding part 1, mainnet fork", function() {
     async function yearnWithdrawalFixture() {
         const signer = await loadFixture(signerFixture);
 
-        for (let i in yearnPools) {
-            const iYearnVaultContract = new ethers.Contract(
-            yearnPools[i].vault,
-            iYearnVault.abi,
-            signer
-            );
-
-            const balance = await iYearnVaultContract.balanceOf(TREASURY_ADDRESS);
-            const symbol = await iYearnVaultContract.symbol();
-            const decimals = await iYearnVaultContract.decimals();
-
-            console.log(`Withdrawing ${ethers.utils.formatUnits(balance, decimals)} ${symbol} yearn vault`);
-            await iYearnVaultContract.withdraw(balance, TREASURY_ADDRESS, 10000);
-        }
-
-        return signer;
+        return await withdrawFromYearn(signer);
     }
 
     async function priceCheckerDeployFixture() {
         const signer = await loadFixture(yearnWithdrawalFixture);
         
-        // Deploy the curve price checker
-        const factory = new CurvelpPriceChecker__factory(signer);
-        let priceChecker = await factory.deploy('Curve LP Withdraw Price Checker');
-        priceChecker = await priceChecker.deployed();
-        const address = priceChecker.address;
-
-        return { signer, address };
+        return await deployPriceChecker(signer);
     }
 
     it ("should have zero crv lp balances before yearn withdrawal", async function() {
@@ -90,7 +67,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
         }
     });
 
-    it("should have crv lp, DAI, wbtc balances after yearn withdrawal", async function() {
+    it("should have crv lp, USDC, DAI, wbtc balances after yearn withdrawal", async function() {
         const signer = await loadFixture(yearnWithdrawalFixture);
 
         console.log('CRV Token Balances after Withdraw from Yearn:')
@@ -283,7 +260,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
                 `${lpBalance} ${lpSymbol} -> ${withdrawnSymbol}`,
             )
 
-            iMilkmanContract.requestSwapExactTokensForTokens(
+            const calledSwap = await iMilkmanContract.requestSwapExactTokensForTokens(
                 lpBalance,
                 yearnPools[i].withdrawn,
                 crvPools[i].withdrawn,
@@ -291,6 +268,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
                 address,
                 priceCheckerData
             );
+            console.log(calledSwap);
         }
 
         console.log("No Reverts Returned.")
