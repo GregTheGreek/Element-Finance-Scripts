@@ -5,12 +5,14 @@ import iYearnVault from '../../elf-contracts/artifacts/contracts/interfaces/IYea
 import iERC20 from '../../elf-contracts/artifacts/contracts/interfaces/IERC20.sol/IERC20.json'
 import iCurvePool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurvePool.json'
 import iCurveMetaPool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurveMetaPool.json'
+import iMilkman from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iMilkman.json'
 
 // Helpers
 import * as addresses from '../helpers/addresses'
 import { createCallHash } from '../helpers/hashing'
 import { CurvelpPriceChecker__factory } from '../../typechain'
 import { Signer } from 'ethers'
+import { Address } from 'cluster'
 
 // Withdraw from the appropriate Yearn Vaults
 export const yearnPools = [
@@ -119,6 +121,7 @@ export const crvPools = [
 ];
 
 export const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
+export const MILKMAN_ADDRESS = "0x11C76AD590ABDFFCD980afEC9ad951B160F02797";
 
 export async function withdrawFromYearn(signer: Signer) {
     for (let i in yearnPools) {
@@ -149,8 +152,57 @@ export async function deployPriceChecker(signer: Signer) {
     return { signer, address };    
 };
 
-async function proposal() {
+export async function swapviaMilkman(signer: Signer, address: String) {
+    const iMilkmanContract = new ethers.Contract(
+        // milkman address
+        MILKMAN_ADDRESS,
+        iMilkman.abi,
+        signer
+    );
 
+    for (let i in crvPools) {
+        const priceCheckerData = ethers.utils.defaultAbiCoder.encode(
+            ["uint256", "bool", "uint256", "int128", "address"],
+            // 1% slippage param
+            [100, crvPools[i].isInt128, crvPools[i].i, crvPools[i].i, crvPools[i].pool]
+        );
+
+        const lpTokenContract = new ethers.Contract(
+            yearnPools[i].withdrawn,
+            iERC20.abi,
+            signer
+        );
+        const lpBalance = await lpTokenContract.balanceOf(TREASURY_ADDRESS);
+        const lpSymbol = await lpTokenContract.symbol();
+
+        const withdrawnTokenContract = new ethers.Contract(
+            crvPools[i].withdrawn,
+            iERC20.abi,
+            signer
+        );
+        const withdrawnSymbol = await withdrawnTokenContract.symbol();
+
+        console.log(
+            `Requesting an on-chain Swap via Milkman at 1% slippage.\n`,
+            `${lpBalance} ${lpSymbol} -> ${withdrawnSymbol}`,
+        )
+
+        // approve erc20 spend amount to milkman contract
+        await lpTokenContract.approve(MILKMAN_ADDRESS, lpBalance);
+
+        await iMilkmanContract.requestSwapExactTokensForTokens(
+            lpBalance,
+            yearnPools[i].withdrawn,
+            crvPools[i].withdrawn,
+            TREASURY_ADDRESS,
+            address,
+            priceCheckerData
+        );
+    }
+}
+
+async function proposal() {
+    // Fill in the rest of the proposal logic
 }
 
 async function main() {
