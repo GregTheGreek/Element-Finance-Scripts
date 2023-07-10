@@ -2,6 +2,7 @@
 pragma solidity ^0.7.6;
 pragma abicoder v2;
 
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 interface iCurvePool {
@@ -48,17 +49,17 @@ contract CurvelpPriceChecker is IPriceChecker {
         uint256 _minOut,
         bytes calldata _data
     ) external view override returns (bool) {
-        (uint256 _allowedSlippageInBps, uint256 _i, int128 _128i, address _pool) = abi.decode(
+        (uint256 _allowedSlippageInBps, bool _is128, uint256 _i, int128 _i128, address _pool) = abi.decode(
             _data,
-            (uint256, uint256, int128, address)
+            (uint256, bool, uint256, int128, address)
         );
 
         uint256 _expectedOut;
 
-        if (_expectedOut > 0) {
-            _expectedOut = iCurvePool(_pool).calc_withdraw_one_coin(_amountIn, _i);
+        if (_is128) {
+            _expectedOut = iCurveMetaPool(_pool).calc_withdraw_one_coin(_amountIn, _i128);
         } else {
-            _expectedOut = iCurveMetaPool(_pool).calc_withdraw_one_coin(_amountIn, _128i);
+            _expectedOut = iCurvePool(_pool).calc_withdraw_one_coin(_amountIn, _i);
         }
 
         return
