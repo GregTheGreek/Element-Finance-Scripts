@@ -120,6 +120,98 @@ export const crvPools = [
     },
 ];
 
+// Withdraw from the appropriate balancer pools
+export const balancerPools = [
+    {
+        // LPePyvCurve-MIM-11FEB22
+        pool: '0x09b1b33BaD0e87454ff05696b1151BFbD208a43F',
+    },
+    {
+        // LPePyvCurve-EURS-11FEB22
+        pool: '0x6AC02eCD0c2A23B11f9AFb3b3Aaf237169475cac',
+    },
+    {
+        // LPePyvcrvSTETH-15APR22
+        pool: '0xb03C6B351A283bc1Cd26b9cf6d7B0c4556013bDb',
+    },
+    {
+        // LPePyvUSDC-17DEC21
+        pool: '0x90ca5cef5b29342b229fb8ae2db5d8f4f894d652',
+    },
+    {
+        // LPePyvCurveLUSD-28SEP21
+        pool: '0xA8D4433BAdAa1A35506804B43657B0694deA928d',
+    },
+    {
+        // LPePyvcrv3crypto-29APR22
+        pool: '0x6Dd0F7c8F4793ed2531c0df4fEA8633a21fDcFf4',
+    },
+    {
+        // LPePyvCurveLUSD-27DEC21
+        pool: '0x893B30574BF183d69413717f30b17062eC9DFD8b',
+    },
+    {
+        // LPePyvUSDC-29APR22
+        pool: '0x7edde0cb05ed19e03a9a47cd5e53fc57fde1c80c',
+    },
+    {
+        // LPePyvCurve-MIM-29APR22
+        pool: '0x14792d3F6FcF2661795d1E08ef818bf612708BbF',
+    },
+    {
+        // LPePyvCrvTriCrypto-15AUG21
+        pool: '0x3A693EB97b500008d4Bb6258906f7Bbca1D09Cc5',
+    },
+    {
+        // LPePyvCurve-alUSD-29APR22
+        pool: '0x63E9B50DD3eB63BfBF93B26F57b9EFB574e59576',
+    },
+    {
+        // LPePyvcrvSTETH-15OCT21
+        pool: '0xce16E7ed7654a3453E8FaF748f2c82E57069278f',
+    },
+    {
+        // LPePyvWBTC-29APR22
+        pool: '0x4bd6D86dEBdB9F5413e631Ad386c4427DC9D01B2',
+    },
+    {
+        // LPePyvDAI-16OCT21
+        pool: '0x71628c66C502F988Fbb9e17081F2bD14e361FAF4',
+    },
+    {
+        // LPePyvCurveLUSD-29APR22
+        pool: '0x56f30398d13f111401d6e7ffe758254a0946687d',
+    },
+    {
+        // LPePyvUSDC-29OCT21
+        pool: '0x787546Bf2c05e3e19e2b6BDE57A203da7f682efF',
+    },
+    {
+        // LPePyvDAI-29APR22
+        pool: '0xEdf085f65b4F6c155e13155502Ef925c9a756003',
+    },
+    {
+        // LPePyvcrv3crypto-12NOV21
+        pool: '0xF6dc4640D2783654BeF88E0dF3fb0F051f0DfC1A',
+    },
+    {
+        // LPePyvWBTC-26NOV21
+        pool: '0x4Db9024fc9F477134e00Da0DA3c77DE98d9836aC',
+    },
+    {
+        // LPePyvUSDC-28JAN22
+        pool: '0x10a2F8bd81Ee2898D7eD18fb8f114034a549FA59',
+    },
+    {
+        // LPePyvDAI-28JAN22
+        pool: '0xA47D1251CF21AD42685Cc6B8B3a186a73Dbd06cf',
+    },
+    {
+        // LPePyvcrvSTETH-28JAN22
+        pool: '0x544c823194218f0640daE8291c1f59752d25faE3',
+    },
+];
+
 export const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
 export const MILKMAN_ADDRESS = "0x11C76AD590ABDFFCD980afEC9ad951B160F02797";
 
