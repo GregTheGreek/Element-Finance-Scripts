@@ -214,6 +214,7 @@ export const balancerPools = [
 
 export const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
 export const MILKMAN_ADDRESS = "0x11C76AD590ABDFFCD980afEC9ad951B160F02797";
+export const BALANCER_VAULT = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
 
 export async function withdrawFromYearn(signer: Signer) {
     for (let i in yearnPools) {
