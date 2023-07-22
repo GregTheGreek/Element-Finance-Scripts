@@ -2,15 +2,11 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-interface iBalancerVault {
-    function getPoolTokens (
-        bytes32 poolId,
-    ) external view returns (
-        address[] tokens,
-        uint256[] balances,
-        uint256 lastChangeBlock
-    )
+interface IAsset {
+    // solhint-disable-previous-line no-empty-blocks
+}
 
+interface IVault {
     enum SwapKind {
         GIVEN_IN,
         GIVEN_OUT
@@ -38,15 +34,23 @@ interface iBalancerVault {
         bool toInternalBalance;
     }
 
+    function getPoolTokens(
+        bytes32 poolId
+    ) external view returns (
+        address[] memory tokens,
+        uint256[] memory balances,
+        uint256 lastChangeBlock
+    );
+
     function swap(
         SingleSwap memory singleSwap,
         FundManagement memory funds,
         uint256 limit,
         uint256 deadline
-    ) external payable returns (uint256)
+    ) external payable returns (uint256);
 
     function getPool(bytes32 poolId)
         external
         view
-        returns (address, PoolSpecialization)
+        returns (address, PoolSpecialization);
 }
