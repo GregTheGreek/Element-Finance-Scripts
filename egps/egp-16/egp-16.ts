@@ -52,7 +52,7 @@ export const yearnPools = [
         withdrawn: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     },
     {
-        // ywbtc -> wbtc
+        // yvwbtc -> wbtc
         vault: "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E",
         withdrawn: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     },
@@ -121,6 +121,7 @@ export const crvPools = [
 ];
 
 // Withdraw from the appropriate balancer pools
+const BigNumber = ethers.BigNumber;
 export const balancerPools = [
     {
         // LPePyvCurve-MIM-11FEB22
@@ -129,7 +130,11 @@ export const balancerPools = [
         withdraw: {
             pt: '0x418De6227499181B045CAdf554030722E460881a',
             base: '0x5a6A4D54456819380173272A5E8E9B9904BdF41B',
-        }
+            amounts: [
+                BigNumber.from('24088947429834919766981'),
+                BigNumber.from('100028621789651142961'),
+            ],
+        },
     },
     {
         // LPePyvCurve-EURS-11FEB22
