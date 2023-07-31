@@ -4,10 +4,22 @@ import { network, ethers } from 'hardhat'
 
 // Artifacts
 import iERC20 from '../../elf-contracts/artifacts/contracts/libraries/ERC20PermitWithSupply.sol/ERC20PermitWithSupply.json'
+import iTranche from '../../elf-contracts/artifacts/contracts/interfaces/ITranche.sol/ITranche.json'
 import iVault from '../../artifacts/egps/egp-16/BalancerVault.sol/IVault.json'
 
 import { balancerPools, BALANCER_VAULT_ADDRESS, GSC_TREASURY_ADDRESS, TREASURY_ADDRESS } from "./egp-16";
 import { BigNumber } from "ethers";
+import { EtherscanProvider } from "@ethersproject/providers";
+
+function trimDecimalOverflow(n: string, decimals: number){
+    n+=""
+
+    if(n.indexOf(".") === -1) return n
+    
+    const arr = n.split(".");
+    const fraction = arr[1] .substr(0, decimals);
+    return arr[0] + "." + fraction;
+}
 
 // Run the test on a mainnet fork
 describe("Run unwinding GSC treasury", function() {
@@ -97,93 +109,115 @@ describe("Run unwinding GSC treasury", function() {
     };
 
 
-    it ("withdraw mim", async function() {
-        // await loadFixture(mimFixture);
-        const signer = await loadFixture(signerFixture);
+    it ("withdraw lp and redeem", async function() {
+        for (let i in balancerPools) {
+            const signer = await loadFixture(signerFixture);
 
-        const vaultContract = new ethers.Contract(
-            BALANCER_VAULT_ADDRESS,
-            iVault.abi,
-            signer
-        );
-        const lpTokenContract = new ethers.Contract(
-            balancerPools[0].pool,
-            iERC20.abi,
-            signer
-        );
-        const lpBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        const totalSupply = await lpTokenContract.totalSupply();
-        await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, lpBalance);
-        const poolExitTokens = await vaultContract.getPoolTokens(balancerPools[0].poolId);
+            const vaultContract = new ethers.Contract(
+                BALANCER_VAULT_ADDRESS,
+                iVault.abi,
+                signer
+            );
+            const lpTokenContract = new ethers.Contract(
+                balancerPools[i].pool,
+                iERC20.abi,
+                signer
+            );
+            const lpBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+            const lpBalanceDecimals = await lpTokenContract.decimals();
+            const totalSupply = await lpTokenContract.totalSupply();
+            const totalSupplyDecimals = await lpTokenContract.decimals();
+            await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, lpBalance);
+            const poolExitTokens = await vaultContract.getPoolTokens(balancerPools[i].poolId);
 
-        console.log(poolExitTokens);
-        console.log(totalSupply);
-        console.log(lpBalance);
-        const totalSupplyString = ethers.utils.formatUnits(totalSupply, 18);
-        const lpBalanceString = ethers.utils.formatUnits(lpBalance, 18);
-        console.log(totalSupplyString);
-        console.log(lpBalanceString);
+            const totalSupplyString = ethers.utils.formatUnits(totalSupply, totalSupplyDecimals);
+            const lpBalanceString = ethers.utils.formatUnits(lpBalance, lpBalanceDecimals);
 
-        const totalSupplyFixed = ethers.FixedNumber.fromString(totalSupplyString);
-        const lpBalanceFixed = ethers.FixedNumber.fromString(lpBalanceString);
-
-        console.log(totalSupplyFixed);
-        console.log(lpBalanceFixed);
-
-        const lpShare = lpBalanceFixed.divUnsafe(totalSupplyFixed);
-        console.log(lpShare.toString());
-
-        const token1Fixed = ethers.FixedNumber.fromString(ethers.utils.formatUnits(poolExitTokens.balances[0], 18));
-        const token2Fixed = ethers.FixedNumber.fromString(ethers.utils.formatUnits(poolExitTokens.balances[1], 18));
-        const minOut1Fixed = token1Fixed.mulUnsafe(lpShare);
-        const minOut2Fixed = token2Fixed.mulUnsafe(lpShare);
-        console.log(minOut1Fixed.toString());
-        console.log(minOut2Fixed.toString());
+            const totalSupplyFixed = ethers.FixedNumber.fromString(totalSupplyString);
+            const lpBalanceFixed = ethers.FixedNumber.fromString(lpBalanceString);
 
 
-        const minOut1 = ethers.utils.parseUnits(minOut1Fixed.toString(), 18);
-        const minOut2 = ethers.utils.parseUnits(minOut2Fixed.toString(), 18);
+            const lpShare = lpBalanceFixed.divUnsafe(totalSupplyFixed);
 
-        const minOuts = [
-            minOut1,
-            minOut2,
-        ];
+            const token1Contract = new ethers.Contract(
+                poolExitTokens.tokens[0],
+                iERC20.abi,
+                signer
+            );
 
-        console.log("minOuts: ", minOuts);
+            const token2Contract = new ethers.Contract(
+                poolExitTokens.tokens[1],
+                iERC20.abi,
+                signer
+            );
 
-        const userData = ethers.utils.defaultAbiCoder.encode(["uint256[]"], [minOuts]);
+            const token1Decimals = await token1Contract.decimals();
+            const token2Decimals = await token2Contract.decimals();
 
-        const exitPoolRequest = {
-            assets: poolExitTokens.tokens,
-            minAmountsOut: [0, 0],
-            userData,
-            toInternalBalance: false
-        };
-        const exitResponse = await vaultContract.exitPool(
-            balancerPools[0].poolId,
-            GSC_TREASURY_ADDRESS,
-            GSC_TREASURY_ADDRESS,
-            exitPoolRequest
-        );
+            const token1Fixed = ethers.FixedNumber.fromValue(poolExitTokens.balances[0], token1Decimals);
+            const token2Fixed = ethers.FixedNumber.fromValue(poolExitTokens.balances[1], token2Decimals);
+            const minOut1Fixed = token1Fixed.mulUnsafe(lpShare);
+            const minOut2Fixed = token2Fixed.mulUnsafe(lpShare);
 
-        const ptTokenContract = new ethers.Contract(
-            balancerPools[0].withdraw.pt,
-            iERC20.abi,
-            signer
-        );
-        const baseTokenContract = new ethers.Contract(
-            balancerPools[0].withdraw.base,
-            iERC20.abi,
-            signer
-        );
+            const minOut1 = ethers.utils.parseUnits(trimDecimalOverflow(minOut1Fixed.toString(), token1Decimals), token1Decimals);
+            const minOut2 = ethers.utils.parseUnits(trimDecimalOverflow(minOut2Fixed.toString(), token2Decimals), token2Decimals);
 
-        const ptBalance = await ptTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        const ptSymbol = await ptTokenContract.symbol();
-        const baseBalance = await baseTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        const baseSymbol = await baseTokenContract.symbol();
+            const minOuts = [
+                minOut1,
+                minOut2,
+            ];
 
-        console.log(`withdraw pt token ${ptSymbol} balance: ${ethers.utils.formatUnits(ptBalance, 18)}`);
-        console.log(`withdraw base token ${baseSymbol} balance: ${ethers.utils.formatUnits(baseBalance, 18)}`);
+            const userData = ethers.utils.defaultAbiCoder.encode(["uint256[]"], [minOuts]);
+            const exitPoolRequest = {
+                assets: poolExitTokens.tokens,
+                minAmountsOut: [0, 0],
+                userData,
+                toInternalBalance: false
+            };
+            const exitResponse = await vaultContract.exitPool(
+                balancerPools[i].poolId,
+                GSC_TREASURY_ADDRESS,
+                GSC_TREASURY_ADDRESS,
+                exitPoolRequest
+            );
+
+            const ptTokenContract = new ethers.Contract(
+                balancerPools[i].withdraw.pt,
+                iERC20.abi,
+                signer
+            );
+            const baseTokenContract = new ethers.Contract(
+                balancerPools[i].withdraw.base,
+                iERC20.abi,
+                signer
+            );
+
+            const ptBalance = await ptTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+            const ptSymbol = await ptTokenContract.symbol();
+            const ptDecimals = await ptTokenContract.decimals();
+            const baseBalance = await baseTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+            const baseSymbol = await baseTokenContract.symbol();
+            const baseDecimals = await baseTokenContract.decimals();
+
+            console.log(`withdraw pt token ${ptSymbol} balance: ${ethers.utils.formatUnits(ptBalance, ptDecimals)}`);
+            console.log(`withdraw base token ${baseSymbol} balance: ${ethers.utils.formatUnits(baseBalance, baseDecimals)}`);
+
+            // redeem PT
+            const trancheContract = new ethers.Contract(
+                balancerPools[i].tranche,
+                iTranche.abi,
+                signer
+            );
+
+            await ptTokenContract.approve(balancerPools[i].tranche, ptBalance);
+            await trancheContract.withdrawPrincipal(ptBalance, GSC_TREASURY_ADDRESS);
+
+            const newPtBalance = await ptTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+            const newBaseBalance = await baseTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+
+            console.log(`After redeem pt token ${baseSymbol} balance: ${ethers.utils.formatUnits(newPtBalance, ptDecimals)}`);
+            console.log(`After redeem base token ${baseSymbol} balance: ${ethers.utils.formatUnits(newBaseBalance, baseDecimals)}`);
+        }
     });
 
     it ("testing...", async function() {
