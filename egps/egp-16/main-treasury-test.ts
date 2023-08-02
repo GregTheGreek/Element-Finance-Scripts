@@ -9,6 +9,7 @@ import iPriceChecker from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/I
 import iCurveMetaPool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurveMetaPool.json'
 
 import { yearnPools, crvPools, TREASURY_ADDRESS, withdrawFromYearn, deployPriceChecker, swapviaMilkman } from "./egp-16";
+import { BigNumber } from "ethers";
 
 // Run the test on a mainnet fork
 describe("Run unwinding part 1, mainnet fork", function() {
@@ -108,6 +109,10 @@ describe("Run unwinding part 1, mainnet fork", function() {
         }
     })
 
+    it("check gas on CRV pool withdraw", async function() {
+        console.log('hi');
+    })
+
     it("price checker should return false when slippage not met", async function() {
         const { signer, address } = await loadFixture(priceCheckerDeployFixture);
 
@@ -196,6 +201,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
                 lpBalance,
                 crvPools[i].i
             );
+
             const withdrawnSymbol = await withdrawnToken.symbol();
             const withdrawnDecimals = await withdrawnToken.decimals();
 
@@ -211,6 +217,14 @@ describe("Run unwinding part 1, mainnet fork", function() {
                 amountWithdrawn,
                 arrayified
             );
+
+            await lpTokenContract.approve(crvPools[i].pool, lpBalance)
+            const withdrawnTx = await iCurvePoolContract.remove_liquidity_one_coin(
+                lpBalance,
+                crvPools[i].i,
+                0
+            );
+            console.log('removing liquidity crv, gas used: ', withdrawnTx.gasLimit);
     
             assert.isTrue(pricePasses);
         }

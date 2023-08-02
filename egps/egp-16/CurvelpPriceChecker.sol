@@ -21,6 +21,12 @@ interface iCurvePool {
         uint256 token_amount,
         uint256 i
     ) external view returns (uint256);
+
+    function remove_liquidity_one_coin(
+        uint256 token_amount,
+        uint256 i,
+        uint256 min_amount
+    ) external payable;
 }
 
 interface iCurveMetaPool {
@@ -28,6 +34,12 @@ interface iCurveMetaPool {
         uint256 token_amount,
         int128 i
     ) external view returns (uint256);
+
+    function remove_liquidity_one_coin(
+        uint256 token_amount,
+        int128 i,
+        uint256 min_amount
+    ) external payable;
 }
 
 interface IPriceChecker {

@@ -378,7 +378,8 @@ export async function withdrawFromYearn(signer: Signer) {
         const decimals = await iYearnVaultContract.decimals();
 
         console.log(`Withdrawing ${ethers.utils.formatUnits(balance, decimals)} ${symbol} yearn vault`);
-        await iYearnVaultContract.withdraw(balance, TREASURY_ADDRESS, 10000);
+        const withdrawTx = await iYearnVaultContract.withdraw(balance, TREASURY_ADDRESS, 10000);
+        console.log('Withdrawing gas used: ', withdrawTx.gasLimit);
     }
 
     return signer;
