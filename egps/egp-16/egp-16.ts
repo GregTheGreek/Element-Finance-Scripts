@@ -358,6 +358,28 @@ export const balancerPools = [
         },
         isV1: true,
     },
+    {
+        // LPePyvCurve-alUSD-28JAN22
+        pool: '0xC9AD279994980F8DF348b526901006972509677F',
+        tranche: '0x55096A35Bf827919B3Bb0A5e6b5E2af8095F3D4d',
+        poolId: '0xc9ad279994980f8df348b526901006972509677f00020000000000000000009e',
+        withdraw: {
+            pt: '0x55096A35Bf827919B3Bb0A5e6b5E2af8095F3D4d',
+            base: '0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c'
+        },
+        isV1: true,
+    },
+    {
+        // LPePyvCurve-MIM-11FEB22
+        pool: '0x09b1b33BaD0e87454ff05696b1151BFbD208a43F',
+        tranche: '0x418De6227499181B045CAdf554030722E460881a',
+        poolId: '0x09b1b33bad0e87454ff05696b1151bfbd208a43f0002000000000000000000a6',
+        withdraw: {
+            pt: '0x418De6227499181B045CAdf554030722E460881a',
+            base: '0x5a6A4D54456819380173272A5E8E9B9904BdF41B'
+        },
+        isV1: true,
+    }
 ];
 
 export const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
