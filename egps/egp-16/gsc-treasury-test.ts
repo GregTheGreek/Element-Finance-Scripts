@@ -1,11 +1,13 @@
 import { expect, assert } from "chai";
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { network, ethers } from 'hardhat'
+import { encodeSingle, encodeMulti } from 'ethers-multisend';
 
 // Artifacts
 import iERC20 from '../../elf-contracts/artifacts/contracts/libraries/ERC20PermitWithSupply.sol/ERC20PermitWithSupply.json'
 import iTranche from '../../elf-contracts/artifacts/contracts/interfaces/ITranche.sol/ITranche.json'
 import iVault from '../../artifacts/egps/egp-16/BalancerVault.sol/IVault.json'
+import iGnosisSafe from '../../artifacts/egps/egp-16/GnosisSafe.sol/iGnosisSafe.json'
 
 import { balancerPools, BALANCER_VAULT_ADDRESS, GSC_TREASURY_ADDRESS, TREASURY_ADDRESS } from "./egp-16";
 import { BigNumber } from "ethers";
@@ -42,76 +44,78 @@ describe("Run unwinding GSC treasury", function() {
         return signer;
     };
 
-    async function mimFixture() {
+    it ("testing safe transaction", async function() {
         // Setup your signer
         await network.provider.request({
             method: "hardhat_impersonateAccount",
-            params: ["0xd8b712d29381748dB89c36BCa0138d7c75866ddF"],
+            params: ['0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D'],
         });
 
         await network.provider.send("hardhat_setBalance", [
-            "0xd8b712d29381748dB89c36BCa0138d7c75866ddF",
+            '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D',
             ethers.utils.parseEther("10.0").toHexString()
         ]);
 
         const signer = await ethers.provider.getSigner(
-            "0xd8b712d29381748dB89c36BCa0138d7c75866ddF"
+            '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D'
         );
 
-        // mim vault
-        const vaultContract = new ethers.Contract(
-            BALANCER_VAULT_ADDRESS,
-            iVault.abi,
-            signer
-        );
-        const baseTokenContract = new ethers.Contract(
-            balancerPools[0].withdraw.base,
+        const lpTokenContract = new ethers.Contract(
+            balancerPools[0].pool,
             iERC20.abi,
             signer
         );
-        const baseBalance = await baseTokenContract.balanceOf('0xd8b712d29381748dB89c36BCa0138d7c75866ddF');
-        await baseTokenContract.approve(BALANCER_VAULT_ADDRESS, baseBalance);
-
-        const singleSwap = {
-            poolId: balancerPools[0].poolId,
-            kind: 0,
-            assetIn: balancerPools[0].withdraw.base,
-            assetOut: balancerPools[0].withdraw.pt,
-            amount: BigNumber.from('11911000000000000000000'),
-            userData: "0x00",
-          };
         
-        const funds = {
-            sender: '0xd8b712d29381748dB89c36BCa0138d7c75866ddF',
-            recipient: '0xd8b712d29381748dB89c36BCa0138d7c75866ddF',
-            fromInternalBalance: false,
-            toInternalBalance: false,
-        };
-    
-        const limit = BigNumber.from('0');
-        const deadline = Math.round(Date.now() / 1000) + 100; // 100 seconds expiration
+        const iERC20Interace = new ethers.utils.Interface(iERC20.abi)
 
-        await vaultContract.swap(singleSwap, funds, limit, deadline);
+        const functionData = iERC20Interace.encodeFunctionData('transfer', [
+            '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D',
+            ethers.BigNumber.from(100)
+        ]);
 
-        const ptTokenContract = new ethers.Contract(
-            balancerPools[0].withdraw.pt,
-            iERC20.abi,
+        const safeContract = new ethers.Contract(
+            GSC_TREASURY_ADDRESS,
+            iGnosisSafe.abi,
             signer
         );
 
-        const ptBalance = await ptTokenContract.balanceOf('0xd8b712d29381748dB89c36BCa0138d7c75866ddF');
-        const ptSymbol = await ptTokenContract.symbol();
-        const newBaseBalance = await baseTokenContract.balanceOf('0xd8b712d29381748dB89c36BCa0138d7c75866ddF');
-        const baseSymbol = await baseTokenContract.symbol();
+        const signatures = "0x" + "000000000000000000000000" + '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D'.replace('0x', '') + "0000000000000000000000000000000000000000000000000000000000000000" + "01";
 
-        console.log(`withdraw pt token ${ptSymbol} balance: ${ethers.utils.formatUnits(ptBalance, 18)}`);
-        console.log(`withdraw base token ${baseSymbol} balance: ${ethers.utils.formatUnits(newBaseBalance, 18)}`);
-    };
+        const encodedSingle = {
+            to: balancerPools[0].pool,
+            value: '0x00',
+            data: functionData
+        }
+        const encodedMultiSend = encodeMulti([encodedSingle], '0x8D29bE29923b68abfDD21e541b9374737B49cdAD');
+        console.log(encodedMultiSend);
 
+        const beforeBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+        console.log(beforeBalance);
+
+        const response = await safeContract.execTransaction(
+            '0x8D29bE29923b68abfDD21e541b9374737B49cdAD',
+            0,
+            encodedMultiSend.data,
+            1,
+            0,
+            0,
+            0,
+            '0x0000000000000000000000000000000000000000',
+            '0x0000000000000000000000000000000000000000',
+            signatures
+        );
+
+        console.log(response);
+        const afterBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+        console.log(afterBalance);
+    });
 
     it ("withdraw lp and redeem", async function() {
+        const signer = await loadFixture(signerFixture);
+        const totalGasUsed = []
+        // redeem and withdraw
         for (let i in balancerPools) {
-            const signer = await loadFixture(signerFixture);
+            let gasUsed = BigNumber.from("0");
 
             const vaultContract = new ethers.Contract(
                 BALANCER_VAULT_ADDRESS,
@@ -124,19 +128,22 @@ describe("Run unwinding GSC treasury", function() {
                 signer
             );
             const lpBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
+            const lpBalanceSymbol = await lpTokenContract.symbol();
             const lpBalanceDecimals = await lpTokenContract.decimals();
             const totalSupply = await lpTokenContract.totalSupply();
             const totalSupplyDecimals = await lpTokenContract.decimals();
-            await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, lpBalance);
+            const approveBalVaultTx = await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, lpBalance);
+
+            gasUsed = approveBalVaultTx.gasLimit.add(gasUsed);
             const poolExitTokens = await vaultContract.getPoolTokens(balancerPools[i].poolId);
 
             const totalSupplyString = ethers.utils.formatUnits(totalSupply, totalSupplyDecimals);
             const lpBalanceString = ethers.utils.formatUnits(lpBalance, lpBalanceDecimals);
 
+            console.log(`LP Token ${lpBalanceSymbol} balance of ${lpBalanceString}`);
+
             const totalSupplyFixed = ethers.FixedNumber.fromString(totalSupplyString);
             const lpBalanceFixed = ethers.FixedNumber.fromString(lpBalanceString);
-
-
             const lpShare = lpBalanceFixed.divUnsafe(totalSupplyFixed);
 
             const token1Contract = new ethers.Contract(
@@ -181,6 +188,8 @@ describe("Run unwinding GSC treasury", function() {
                 exitPoolRequest
             );
 
+            gasUsed = gasUsed.add(exitResponse.gasLimit);
+
             const ptTokenContract = new ethers.Contract(
                 balancerPools[i].withdraw.pt,
                 iERC20.abi,
@@ -209,75 +218,22 @@ describe("Run unwinding GSC treasury", function() {
                 signer
             );
 
-            await ptTokenContract.approve(balancerPools[i].tranche, ptBalance);
-            await trancheContract.withdrawPrincipal(ptBalance, GSC_TREASURY_ADDRESS);
+            const approveTranche = await ptTokenContract.approve(balancerPools[i].tranche, ptBalance);
+            gasUsed = gasUsed.add(approveTranche.gasLimit)
+
+            const withdrawTranche = await trancheContract.withdrawPrincipal(ptBalance, GSC_TREASURY_ADDRESS);
+            gasUsed = gasUsed.add(withdrawTranche.gasLimit);
 
             const newPtBalance = await ptTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
             const newBaseBalance = await baseTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
 
             console.log(`After redeem pt token ${baseSymbol} balance: ${ethers.utils.formatUnits(newPtBalance, ptDecimals)}`);
             console.log(`After redeem base token ${baseSymbol} balance: ${ethers.utils.formatUnits(newBaseBalance, baseDecimals)}`);
+            totalGasUsed.push(gasUsed)
+
+            expect(ethers.utils.formatUnits(newPtBalance, ptDecimals)).to.equal("0.0");
         }
-    });
 
-    it ("testing...", async function() {
-        // const signer = await loadFixture(signerFixture);
-
-        // for (var i in balancerPools) {
-        //     const vaultContract = new ethers.Contract(
-        //         BALANCER_VAULT_ADDRESS,
-        //         iVault.abi,
-        //         signer
-        //     );
-
-        //     const lpTokenContract = new ethers.Contract(
-        //         balancerPools[i].pool,
-        //         iERC20.abi,
-        //         signer
-        //     );
-
-        //     const lpBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        //     await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, lpBalance);
-
-        //     const poolExitTokens = await vaultContract.getPoolTokens(balancerPools[i].poolId);
-        //     console.log(poolExitTokens.balances[0]);
-        //     console.log(poolExitTokens.balances[1]);
-        //     const userData = ethers.utils.defaultAbiCoder.encode(["uint256[]"], [[
-        //         BigNumber.from('2088947429834919766981'),
-        //         BigNumber.from('24000000000000000000'),
-        //     ]]);
-
-        //     const exitPoolRequest = {
-        //         assets: poolExitTokens.tokens,
-        //         minAmountsOut: [0, 0],
-        //         userData,
-        //         toInternalBalance: false
-        //     };
-        //     const exitResponse = await vaultContract.exitPool(
-        //         balancerPools[i].poolId,
-        //         GSC_TREASURY_ADDRESS,
-        //         GSC_TREASURY_ADDRESS,
-        //         exitPoolRequest
-        //     )
-
-        //     const ptTokenContract = new ethers.Contract(
-        //         balancerPools[i].withdraw.pt,
-        //         iERC20.abi,
-        //         signer
-        //     );
-        //     const baseTokenContract = new ethers.Contract(
-        //         balancerPools[i].withdraw.base,
-        //         iERC20.abi,
-        //         signer
-        //     );
-
-        //     const ptBalance = await ptTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        //     const ptSymbol = await ptTokenContract.symbol();
-        //     const baseBalance = await baseTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        //     const baseSymbol = await baseTokenContract.symbol();
-
-        //     console.log(`withdraw pt token ${ptSymbol} balance: ${ethers.utils.formatUnits(ptBalance, 18)}`);
-        //     console.log(`withdraw base token ${baseSymbol} balance: ${ethers.utils.formatUnits(baseBalance, 18)}`);
-        // }
+        console.log('Total Gas Used, LP withdraw and Redeem: ', totalGasUsed);
     });
 });
