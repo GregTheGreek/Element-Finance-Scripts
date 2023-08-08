@@ -100,4 +100,10 @@ describe("Run unwinding part 1, mainnet fork", function() {
             expect(postBalance).greaterThan(0);    
         }
     })
+
+    it("should generate transactions", async function() {
+        const { transactions } = await loadFixture(yearnWithdrawalFixture);
+
+        console.log('transactions: ', transactions);
+    })
 })
