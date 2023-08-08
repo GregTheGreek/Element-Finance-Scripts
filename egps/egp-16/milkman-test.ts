@@ -41,7 +41,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
     }
 
     async function priceCheckerDeployFixture() {
-        const signer = await loadFixture(yearnWithdrawalFixture);
+        const { signer } = await loadFixture(yearnWithdrawalFixture);
         
         return await deployPriceChecker(signer);
     }

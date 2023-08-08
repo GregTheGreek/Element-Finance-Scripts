@@ -1,12 +1,13 @@
 import { expect, assert } from "chai";
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { network, ethers } from 'hardhat'
+import { encodeMulti } from 'ethers-multisend';
 
 // Artifacts
 import iERC20 from '../../elf-contracts/artifacts/contracts/interfaces/IERC20.sol/IERC20.json'
 
-import { yearnPools, crvPools, TREASURY_ADDRESS } from "./constants";
-import { withdrawFromYearn, deployPriceChecker, swapviaMilkman } from "./helpers";
+import { yearnPools, crvPools, TREASURY_ADDRESS, MULTISEND_ADDRESS } from "./constants";
+import { withdrawFromYearn } from "./helpers";
 
 // Run the test on a mainnet fork
 describe("Run unwinding part 1, mainnet fork", function() {
@@ -35,12 +36,6 @@ describe("Run unwinding part 1, mainnet fork", function() {
         return await withdrawFromYearn(signer);
     }
 
-    async function priceCheckerDeployFixture() {
-        const signer = await loadFixture(yearnWithdrawalFixture);
-        
-        return await deployPriceChecker(signer);
-    }
-
     it ("should have zero crv lp balances before yearn withdrawal", async function() {
         const signer = await loadFixture(signerFixture);
 
@@ -58,7 +53,7 @@ describe("Run unwinding part 1, mainnet fork", function() {
     });
 
     it("should have crv lp, USDC, DAI, wbtc balances after yearn withdrawal", async function() {
-        const signer = await loadFixture(yearnWithdrawalFixture);
+        const { signer } = await loadFixture(yearnWithdrawalFixture);
 
         console.log('CRV Token Balances after Withdraw from Yearn:')
 
@@ -104,5 +99,12 @@ describe("Run unwinding part 1, mainnet fork", function() {
 
             expect(postBalance).greaterThan(0);    
         }
+    })
+
+    it("generates testable tenderly", async function() {
+        const { signer, transactions } = await loadFixture(yearnWithdrawalFixture);
+
+        const encodedMulti = encodeMulti(transactions, MULTISEND_ADDRESS);
+        console.log("multisend call test: ", encodedMulti);
     })
 })

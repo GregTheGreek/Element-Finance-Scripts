@@ -13,6 +13,9 @@ import { CurvelpPriceChecker__factory } from '../../typechain'
 import { Signer } from 'ethers'
 
 export async function withdrawFromYearn(signer: Signer) {
+    const iYearnVaultInterface = new ethers.utils.Interface(iYearnVault.abi);
+    
+    const transactions = [];
     for (let i in yearnPools) {
         const iYearnVaultContract = new ethers.Contract(
         yearnPools[i].vault,
@@ -24,12 +27,29 @@ export async function withdrawFromYearn(signer: Signer) {
         const symbol = await iYearnVaultContract.symbol();
         const decimals = await iYearnVaultContract.decimals();
 
+        // .01%
+        const maxLoss = 1000;
+
         console.log(`Withdrawing ${ethers.utils.formatUnits(balance, decimals)} ${symbol} yearn vault`);
-        const withdrawTx = await iYearnVaultContract.withdraw(balance, TREASURY_ADDRESS, 10000);
+
+        const withdrawFunctionData = iYearnVaultInterface.encodeFunctionData(
+            'withdraw', [
+                balance,
+                TREASURY_ADDRESS,
+                maxLoss
+            ]
+        );
+        const withdrawTxEncodedSingle = {
+            to: yearnPools[i].vault,
+            value: '0x00',
+            data: withdrawFunctionData
+        }
+        const withdrawTx = await iYearnVaultContract.withdraw(balance, TREASURY_ADDRESS, maxLoss);
+        transactions.push(withdrawTxEncodedSingle);
         console.log('Withdrawing gas used: ', withdrawTx.gasLimit);
     }
 
-    return signer;
+    return { signer, transactions };
 };
 
 export async function deployPriceChecker(signer: Signer) {
