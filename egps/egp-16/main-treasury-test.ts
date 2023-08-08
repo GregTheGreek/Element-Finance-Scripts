@@ -100,11 +100,4 @@ describe("Run unwinding part 1, mainnet fork", function() {
             expect(postBalance).greaterThan(0);    
         }
     })
-
-    it("generates testable tenderly", async function() {
-        const { signer, transactions } = await loadFixture(yearnWithdrawalFixture);
-
-        const encodedMulti = encodeMulti(transactions, MULTISEND_ADDRESS);
-        console.log("multisend call test: ", encodedMulti);
-    })
 })
