@@ -9,7 +9,7 @@ import iTranche from '../../elf-contracts/artifacts/contracts/interfaces/ITranch
 import iVault from '../../artifacts/egps/egp-16/interfaces/IBalancer.sol/IVault.json'
 import iGnosisSafe from '../../artifacts/egps/egp-16/interfaces/IGnosisSafe.sol/iGnosisSafe.json'
 
-import { balancerPools, BALANCER_VAULT_ADDRESS, GSC_CORE_VOTING_ADDRESS, GSC_TREASURY_ADDRESS, MULTISEND_ADDRESS, TREASURY_ADDRESS } from "./egp-16";
+import { balancerPools, BALANCER_VAULT_ADDRESS, GSC_CORE_VOTING_ADDRESS, GSC_TREASURY_ADDRESS, MULTISEND_ADDRESS, TREASURY_ADDRESS } from "./constants";
 import { BigNumber } from "ethers";
 
 function trimDecimalOverflow(n: string, decimals: number){

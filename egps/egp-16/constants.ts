@@ -1,18 +1,78 @@
-import { network, ethers } from 'hardhat'
+export const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
+export const MILKMAN_ADDRESS = "0x11C76AD590ABDFFCD980afEC9ad951B160F02797";
+export const BALANCER_VAULT_ADDRESS = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+export const GSC_TREASURY_ADDRESS = "0x654be0b5556f8eadbc2d140505445fa32715ef2b";
+export const GSC_CORE_VOTING_ADDRESS = '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D';
+export const MULTISEND_ADDRESS = "0x8D29bE29923b68abfDD21e541b9374737B49cdAD";
 
-// Artifacts
-import iYearnVault from '../../elf-contracts/artifacts/contracts/interfaces/IYearnVault.sol/IYearnVault.json'
-import iERC20 from '../../elf-contracts/artifacts/contracts/interfaces/IERC20.sol/IERC20.json'
-import iCurvePool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurvePool.json'
-import iCurveMetaPool from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iCurveMetaPool.json'
-import iMilkman from '../../artifacts/egps/egp-16/CurvelpPriceChecker.sol/iMilkman.json'
-
-// Helpers
-import * as addresses from '../helpers/addresses'
-import { createCallHash } from '../helpers/hashing'
-import { CurvelpPriceChecker__factory } from '../../typechain'
-import { Signer } from 'ethers'
-import { Address } from 'cluster'
+export const crvPools = [
+    // crv3crypto -> weth
+    // curve pool = https://etherscan.io/address/0xd51a44d3fae010294c616388b506acda1bfaae46#readContract
+    // i = 2, weth = https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+    {
+        i: 2,
+        pool: '0xd51a44d3fae010294c616388b506acda1bfaae46',
+        isInt128: false,
+        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    },
+    // alusd3crv-f -> 3crv
+    // curve pool = https://etherscan.io/address/0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c#readContract
+    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
+    {
+        i: 1,
+        pool: '0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c',
+        isInt128: true,
+        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+        isMetaPool: true,
+    },
+    // eurscrv -> eurs
+    // curve pool = https://etherscan.io/address/0x0ce6a5ff5217e38315f87032cf90686c96627caa#readContract
+    // i = 0, eurs = https://etherscan.io/address/0xdB25f211AB05b1c97D595516F45794528a807ad8
+    {
+        i: 0,
+        pool: '0x0ce6a5ff5217e38315f87032cf90686c96627caa',
+        isInt128: true,
+        withdrawn: '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+    },
+    // lusd3crv-f -> 3crv
+    // curve pool = https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca#readContract
+    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
+    {
+        i: 1,
+        pool: '0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca',
+        isInt128: true,
+        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+        isMetaPool: true,
+    },
+    // mim-3lp3crv-f -> 3crv
+    // curve pool = https://etherscan.io/address/0x5a6a4d54456819380173272a5e8e9b9904bdf41b#readContract
+    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
+    {
+        i: 1,
+        pool: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
+        isInt128: true,
+        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+        isMetaPool: true,
+    },
+    // stecrv -> eth
+    // curve pool = https://etherscan.io/address/0xdc24316b9ae028f1497c275eb9192a3ea0f67022#readContract
+    // i = 0, eth
+    {
+        i: 0,
+        pool: '0xdc24316b9ae028f1497c275eb9192a3ea0f67022',
+        isInt128: true,
+        withdrawn: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    },
+    // crvTricrypto -> weth
+    // curve pool = https://etherscan.io/address/0x3993d34e7e99abf6b6f367309975d1360222d446#readContract
+    // i = 0, weth
+    {
+        i: 2,
+        pool: '0x3993d34e7e99abf6b6f367309975d1360222d446',
+        isInt128: false,
+        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    }
+];
 
 // Withdraw from the appropriate Yearn Vaults
 export const yearnPools = [
@@ -63,65 +123,7 @@ export const yearnPools = [
     }
 ];
 
-export const crvPools = [
-    // crv3crypto -> eth
-    // curve pool = https://etherscan.io/address/0xd51a44d3fae010294c616388b506acda1bfaae46#readContract
-    // i = 2, weth = https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
-    {
-        i: 2,
-        pool: '0xd51a44d3fae010294c616388b506acda1bfaae46',
-        isInt128: false,
-        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    },
-    // alusd3crv-f -> 3crv
-    // curve pool = https://etherscan.io/address/0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c#readContract
-    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
-    {
-        i: 1,
-        pool: '0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c',
-        isInt128: true,
-        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-    },
-    // eurscrv -> eurs
-    // curve pool = https://etherscan.io/address/0x0ce6a5ff5217e38315f87032cf90686c96627caa#readContract
-    // i = 0, eurs = https://etherscan.io/address/0xdB25f211AB05b1c97D595516F45794528a807ad8
-    {
-        i: 0,
-        pool: '0x0ce6a5ff5217e38315f87032cf90686c96627caa',
-        isInt128: true,
-        withdrawn: '0xdB25f211AB05b1c97D595516F45794528a807ad8',
-    },
-    // lusd3crv-f -> 3crv
-    // curve pool = https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca#readContract
-    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
-    {
-        i: 1,
-        pool: '0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca',
-        isInt128: true,
-        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-    },
-    // mim-3lp3crv-f -> 3crv
-    // curve pool = https://etherscan.io/address/0x5a6a4d54456819380173272a5e8e9b9904bdf41b#readContract
-    // i = 1, 3crv = https://etherscan.io/address/0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490
-    {
-        i: 1,
-        pool: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
-        isInt128: true,
-        withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-    },
-    // stecrv -> weth
-    // curve pool = https://etherscan.io/address/0xdc24316b9ae028f1497c275eb9192a3ea0f67022#readContract
-    // i = 0, eth
-    {
-        i: 0,
-        pool: '0xdc24316b9ae028f1497c275eb9192a3ea0f67022',
-        isInt128: true,
-        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    },
-];
-
 // Withdraw from the appropriate balancer pools
-const BigNumber = ethers.BigNumber;
 export const balancerPools = [
     {
         // LPePyvCurve-MIM-11FEB22
@@ -131,21 +133,6 @@ export const balancerPools = [
         withdraw: {
             pt: '0x418De6227499181B045CAdf554030722E460881a',
             base: '0x5a6A4D54456819380173272A5E8E9B9904BdF41B',
-            amounts: [
-                BigNumber.from('24088947429834919766981'),
-                BigNumber.from('100028621789651142961'),
-            ],
-        },
-        isV1: true,
-    },
-    {
-        // LPePyvCurve-EURS-11FEB22
-        pool: '0x6AC02eCD0c2A23B11f9AFb3b3Aaf237169475cac',
-        tranche: '0x2A8f5649DE50462fF9699Ccc75A2Fb0b53447503',
-        poolId: '0x6ac02ecd0c2a23b11f9afb3b3aaf237169475cac0002000000000000000000a8',
-        withdraw: {
-            pt: '0x2A8f5649DE50462fF9699Ccc75A2Fb0b53447503',
-            base: '0x194eBd173F6cDacE046C53eACcE9B953F28411d1',
         },
         isV1: true,
     },
@@ -227,28 +214,6 @@ export const balancerPools = [
         isV1: true,
     },
     {
-        // LPePyvCrvTriCrypto-15AUG21
-        pool: '0x3A693EB97b500008d4Bb6258906f7Bbca1D09Cc5',
-        tranche: '0x237535Da7e2f0aBa1b68262ABCf7C4e60B42600C',
-        poolId: '0x3a693eb97b500008d4bb6258906f7bbca1d09cc5000200000000000000000065',
-        withdraw: {
-            pt: '0x237535Da7e2f0aBa1b68262ABCf7C4e60B42600C',
-            base: '0xcA3d75aC011BF5aD07a98d02f18225F9bD9A6BDF',
-        },
-        isV1: true,
-    },
-    {
-        // LPePyvCurve-alUSD-29APR22
-        pool: '0x63E9B50DD3eB63BfBF93B26F57b9EFB574e59576',
-        tranche: '0xEaa1cBA8CC3CF01a92E9E853E90277B5B8A23e07',
-        poolId: '0x63e9b50dd3eb63bfbf93b26f57b9efb574e595760002000000000000000000cf',
-        withdraw: {
-            pt: '0xEaa1cBA8CC3CF01a92E9E853E90277B5B8A23e07',
-            base: '0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c',
-        },
-        isV1: true,
-    },
-    {
         // LPePyvcrvSTETH-15OCT21
         pool: '0xce16E7ed7654a3453E8FaF748f2c82E57069278f',
         tranche: '0x26941C63F4587796aBE199348ecd3d7C44F9aE0C',
@@ -256,17 +221,6 @@ export const balancerPools = [
         withdraw: {
             pt: '0x26941C63F4587796aBE199348ecd3d7C44F9aE0C',
             base: '0x06325440D014e39736583c165C2963BA99fAf14E',
-        },
-        isV1: true,
-    },
-    {
-        // LPePyvWBTC-29APR22
-        pool: '0x4bd6D86dEBdB9F5413e631Ad386c4427DC9D01B2',
-        tranche: '0x49e9e169f0B661Ea0A883f490564F4CC275123Ed',
-        poolId: '0x4bd6d86debdb9f5413e631ad386c4427dc9d01b20002000000000000000000ec',
-        withdraw: {
-            pt: '0x49e9e169f0B661Ea0A883f490564F4CC275123Ed',
-            base: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
         },
         isV1: true,
     },
@@ -300,17 +254,6 @@ export const balancerPools = [
         withdraw: {
             pt: '0xf38c3E836Be9cD35072055Ff6a9Ba570e0B70797',
             base: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-        },
-        isV1: true,
-    },
-    {
-        // LPePyvDAI-29APR22
-        pool: '0xEdf085f65b4F6c155e13155502Ef925c9a756003',
-        tranche: '0x2c72692E94E757679289aC85d3556b2c0f717E0E',
-        poolId: '0xedf085f65b4f6c155e13155502ef925c9a756003000200000000000000000123',
-        withdraw: {
-            pt: '0x2c72692E94E757679289aC85d3556b2c0f717E0E',
-            base: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
         },
         isV1: true,
     },
@@ -369,114 +312,4 @@ export const balancerPools = [
         },
         isV1: true,
     },
-    {
-        // LPePyvCurve-MIM-11FEB22
-        pool: '0x09b1b33BaD0e87454ff05696b1151BFbD208a43F',
-        tranche: '0x418De6227499181B045CAdf554030722E460881a',
-        poolId: '0x09b1b33bad0e87454ff05696b1151bfbd208a43f0002000000000000000000a6',
-        withdraw: {
-            pt: '0x418De6227499181B045CAdf554030722E460881a',
-            base: '0x5a6A4D54456819380173272A5E8E9B9904BdF41B'
-        },
-        isV1: true,
-    }
 ];
-
-export const TREASURY_ADDRESS = "0x82ef450fb7f06e3294f2f19ed1713b255af0f541";
-export const MILKMAN_ADDRESS = "0x11C76AD590ABDFFCD980afEC9ad951B160F02797";
-export const BALANCER_VAULT_ADDRESS = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
-export const GSC_TREASURY_ADDRESS = "0x654be0b5556f8eadbc2d140505445fa32715ef2b";
-
-export async function withdrawFromYearn(signer: Signer) {
-    for (let i in yearnPools) {
-        const iYearnVaultContract = new ethers.Contract(
-        yearnPools[i].vault,
-        iYearnVault.abi,
-        signer
-        );
-
-        const balance = await iYearnVaultContract.balanceOf(TREASURY_ADDRESS);
-        const symbol = await iYearnVaultContract.symbol();
-        const decimals = await iYearnVaultContract.decimals();
-
-        console.log(`Withdrawing ${ethers.utils.formatUnits(balance, decimals)} ${symbol} yearn vault`);
-        const withdrawTx = await iYearnVaultContract.withdraw(balance, TREASURY_ADDRESS, 10000);
-        console.log('Withdrawing gas used: ', withdrawTx.gasLimit);
-    }
-
-    return signer;
-};
-
-export async function deployPriceChecker(signer: Signer) {
-    // Deploy the curve price checker
-    const factory = new CurvelpPriceChecker__factory(signer);
-    let priceChecker = await factory.deploy('Curve LP Withdraw Price Checker');
-    priceChecker = await priceChecker.deployed();
-    const address = priceChecker.address;
-
-    return { signer, address };    
-};
-
-export async function swapviaMilkman(signer: Signer, address: String) {
-    const iMilkmanContract = new ethers.Contract(
-        // milkman address
-        MILKMAN_ADDRESS,
-        iMilkman.abi,
-        signer
-    );
-
-    for (let i in crvPools) {
-        const priceCheckerData = ethers.utils.defaultAbiCoder.encode(
-            ["uint256", "bool", "uint256", "int128", "address"],
-            // 1% slippage param
-            [100, crvPools[i].isInt128, crvPools[i].i, crvPools[i].i, crvPools[i].pool]
-        );
-
-        const lpTokenContract = new ethers.Contract(
-            yearnPools[i].withdrawn,
-            iERC20.abi,
-            signer
-        );
-        const lpBalance = await lpTokenContract.balanceOf(TREASURY_ADDRESS);
-        const lpSymbol = await lpTokenContract.symbol();
-
-        const withdrawnTokenContract = new ethers.Contract(
-            crvPools[i].withdrawn,
-            iERC20.abi,
-            signer
-        );
-        const withdrawnSymbol = await withdrawnTokenContract.symbol();
-
-        console.log(
-            `Requesting an on-chain Swap via Milkman at 1% slippage.\n`,
-            `${lpBalance} ${lpSymbol} -> ${withdrawnSymbol}`,
-        )
-
-        // approve erc20 spend amount to milkman contract
-        await lpTokenContract.approve(MILKMAN_ADDRESS, lpBalance);
-
-        await iMilkmanContract.requestSwapExactTokensForTokens(
-            lpBalance,
-            yearnPools[i].withdrawn,
-            crvPools[i].withdrawn,
-            TREASURY_ADDRESS,
-            address,
-            priceCheckerData
-        );
-    }
-}
-
-async function proposal() {
-    // Fill in the rest of the proposal logic
-}
-
-async function main() {
-  const result = await proposal()
-};
-
-// main()
-//   .then(() => process.exit(0))
-//   .catch((error) => {
-//     console.error(error)
-//     process.exit(1)
-//   })
