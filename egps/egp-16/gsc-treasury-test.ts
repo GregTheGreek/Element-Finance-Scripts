@@ -6,12 +6,11 @@ import { encodeSingle, encodeMulti } from 'ethers-multisend';
 // Artifacts
 import iERC20 from '../../elf-contracts/artifacts/contracts/libraries/ERC20PermitWithSupply.sol/ERC20PermitWithSupply.json'
 import iTranche from '../../elf-contracts/artifacts/contracts/interfaces/ITranche.sol/ITranche.json'
-import iVault from '../../artifacts/egps/egp-16/BalancerVault.sol/IVault.json'
-import iGnosisSafe from '../../artifacts/egps/egp-16/GnosisSafe.sol/iGnosisSafe.json'
+import iVault from '../../artifacts/egps/egp-16/interfaces/IBalancer.sol/IVault.json'
+import iGnosisSafe from '../../artifacts/egps/egp-16/interfaces/IGnosisSafe.sol/iGnosisSafe.json'
 
-import { balancerPools, BALANCER_VAULT_ADDRESS, GSC_TREASURY_ADDRESS, TREASURY_ADDRESS } from "./egp-16";
+import { balancerPools, BALANCER_VAULT_ADDRESS, GSC_CORE_VOTING_ADDRESS, GSC_TREASURY_ADDRESS, MULTISEND_ADDRESS, TREASURY_ADDRESS } from "./egp-16";
 import { BigNumber } from "ethers";
-import { EtherscanProvider } from "@ethersproject/providers";
 
 function trimDecimalOverflow(n: string, decimals: number){
     n+=""
@@ -44,77 +43,18 @@ describe("Run unwinding GSC treasury", function() {
         return signer;
     };
 
-    it ("testing safe transaction", async function() {
-        // Setup your signer
-        await network.provider.request({
-            method: "hardhat_impersonateAccount",
-            params: ['0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D'],
-        });
-
-        await network.provider.send("hardhat_setBalance", [
-            '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D',
-            ethers.utils.parseEther("10.0").toHexString()
-        ]);
-
-        const signer = await ethers.provider.getSigner(
-            '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D'
-        );
-
-        const lpTokenContract = new ethers.Contract(
-            balancerPools[0].pool,
-            iERC20.abi,
-            signer
-        );
-        
-        const iERC20Interace = new ethers.utils.Interface(iERC20.abi)
-
-        const functionData = iERC20Interace.encodeFunctionData('transfer', [
-            '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D',
-            ethers.BigNumber.from(100)
-        ]);
-
-        const safeContract = new ethers.Contract(
-            GSC_TREASURY_ADDRESS,
-            iGnosisSafe.abi,
-            signer
-        );
-
-        const signatures = "0x" + "000000000000000000000000" + '0x422494292e7a9Dda8778Bb4EA05C2779a3d60f5D'.replace('0x', '') + "0000000000000000000000000000000000000000000000000000000000000000" + "01";
-
-        const encodedSingle = {
-            to: balancerPools[0].pool,
-            value: '0x00',
-            data: functionData
-        }
-        const encodedMultiSend = encodeMulti([encodedSingle], '0x8D29bE29923b68abfDD21e541b9374737B49cdAD');
-        console.log(encodedMultiSend);
-
-        const beforeBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        console.log(beforeBalance);
-
-        const response = await safeContract.execTransaction(
-            '0x8D29bE29923b68abfDD21e541b9374737B49cdAD',
-            0,
-            encodedMultiSend.data,
-            1,
-            0,
-            0,
-            0,
-            '0x0000000000000000000000000000000000000000',
-            '0x0000000000000000000000000000000000000000',
-            signatures
-        );
-
-        console.log(response);
-        const afterBalance = await lpTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
-        console.log(afterBalance);
-    });
-
     it ("withdraw lp and redeem", async function() {
-        const signer = await loadFixture(signerFixture);
+        const iERC20Interface = new ethers.utils.Interface(iERC20.abi);
+        const vaultContractInterface = new ethers.utils.Interface(iVault.abi);
+        const trancheContractInterface = new ethers.utils.Interface(iTranche.abi);
+        const safeContractInterface = new ethers.utils.Interface(iGnosisSafe.abi);
+
         const totalGasUsed = []
+        const transactions = [];
+
         // redeem and withdraw
         for (let i in balancerPools) {
+            const signer = await loadFixture(signerFixture);
             let gasUsed = BigNumber.from("0");
 
             const vaultContract = new ethers.Contract(
@@ -132,6 +72,18 @@ describe("Run unwinding GSC treasury", function() {
             const lpBalanceDecimals = await lpTokenContract.decimals();
             const totalSupply = await lpTokenContract.totalSupply();
             const totalSupplyDecimals = await lpTokenContract.decimals();
+
+            const approveBalVaultTxFunctionData = iERC20Interface.encodeFunctionData(
+                'approve', [
+                    BALANCER_VAULT_ADDRESS,
+                    lpBalance
+                ]
+            );
+            const approveBalVaultTxEncodedSingle = {
+                to: balancerPools[i].pool,
+                value: '0x00',
+                data: approveBalVaultTxFunctionData
+            };
             const approveBalVaultTx = await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, lpBalance);
 
             gasUsed = approveBalVaultTx.gasLimit.add(gasUsed);
@@ -181,14 +133,28 @@ describe("Run unwinding GSC treasury", function() {
                 userData,
                 toInternalBalance: false
             };
-            const exitResponse = await vaultContract.exitPool(
+
+            const exitBalancerPoolTxFunctionData = vaultContractInterface.encodeFunctionData(
+                'exitPool', [
+                    balancerPools[i].poolId,
+                    GSC_TREASURY_ADDRESS,
+                    GSC_TREASURY_ADDRESS,
+                    exitPoolRequest
+                ],
+            );
+            const exitBalancerPoolTxEncodedSingle = {
+                to: BALANCER_VAULT_ADDRESS,
+                value: '0x00',
+                data: exitBalancerPoolTxFunctionData
+            };
+            const exitBalancerPooltx = await vaultContract.exitPool(
                 balancerPools[i].poolId,
                 GSC_TREASURY_ADDRESS,
                 GSC_TREASURY_ADDRESS,
                 exitPoolRequest
             );
 
-            gasUsed = gasUsed.add(exitResponse.gasLimit);
+            gasUsed = gasUsed.add(exitBalancerPooltx.gasLimit);
 
             const ptTokenContract = new ethers.Contract(
                 balancerPools[i].withdraw.pt,
@@ -218,11 +184,34 @@ describe("Run unwinding GSC treasury", function() {
                 signer
             );
 
-            const approveTranche = await ptTokenContract.approve(balancerPools[i].tranche, ptBalance);
-            gasUsed = gasUsed.add(approveTranche.gasLimit)
+            const approveTrancheTxFunctionData = iERC20Interface.encodeFunctionData(
+                'approve', [
+                    balancerPools[i].tranche,
+                    ptBalance
+                ],
+            );
+            const approveTrancheTxEncodedSingle = {
+                to: balancerPools[i].withdraw.pt,
+                value: '0x00',
+                data: approveTrancheTxFunctionData
+            };
+            const approveTranchetx = await ptTokenContract.approve(balancerPools[i].tranche, ptBalance);
+            gasUsed = gasUsed.add(approveTranchetx.gasLimit)
 
-            const withdrawTranche = await trancheContract.withdrawPrincipal(ptBalance, GSC_TREASURY_ADDRESS);
-            gasUsed = gasUsed.add(withdrawTranche.gasLimit);
+            const withdrawTrancheTxFunctionData = trancheContractInterface.encodeFunctionData(
+                'withdrawPrincipal', [
+                    ptBalance,
+                    GSC_TREASURY_ADDRESS,
+                ],
+            );
+            const withdrawTrancheTxEncodedSingle = {
+                to: balancerPools[i].tranche,
+                value: '0x00',
+                data: withdrawTrancheTxFunctionData
+            };
+
+            const withdrawTranchetx = await trancheContract.withdrawPrincipal(ptBalance, GSC_TREASURY_ADDRESS);
+            gasUsed = gasUsed.add(withdrawTranchetx.gasLimit);
 
             const newPtBalance = await ptTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
             const newBaseBalance = await baseTokenContract.balanceOf(GSC_TREASURY_ADDRESS);
@@ -231,9 +220,49 @@ describe("Run unwinding GSC treasury", function() {
             console.log(`After redeem base token ${baseSymbol} balance: ${ethers.utils.formatUnits(newBaseBalance, baseDecimals)}`);
             totalGasUsed.push(gasUsed)
 
+            const transferBaseTxFunctionData = iERC20Interface.encodeFunctionData(
+                'transfer', [
+                    TREASURY_ADDRESS,
+                    // some rounding differences in mainnet
+                    newBaseBalance
+                ]
+            );
+            const transferBaseTxEncodedSingle = {
+                to: balancerPools[i].withdraw.base,
+                value: '0x00',
+                data: transferBaseTxFunctionData
+            }
+
+            // prepare all transactions for a gnosis multisend
+            transactions.push(approveBalVaultTxEncodedSingle);
+            transactions.push(exitBalancerPoolTxEncodedSingle);
+            transactions.push(approveTrancheTxEncodedSingle);
+            transactions.push(withdrawTrancheTxEncodedSingle);
+            transactions.push(transferBaseTxEncodedSingle);
+
             expect(ethers.utils.formatUnits(newPtBalance, ptDecimals)).to.equal("0.0");
         }
 
         console.log('Total Gas Used, LP withdraw and Redeem: ', totalGasUsed);
+        const encodedMulti = encodeMulti(transactions, MULTISEND_ADDRESS);
+        const signatures = "0x" + "000000000000000000000000" + GSC_CORE_VOTING_ADDRESS.replace('0x', '') + "0000000000000000000000000000000000000000000000000000000000000000" + "01";
+
+        const gnosisExecTransactionFunctionData = safeContractInterface.encodeFunctionData(
+            'execTransaction', [
+                MULTISEND_ADDRESS,
+                0,
+                encodedMulti.data,
+                1,
+                0,
+                0,
+                0,
+                '0x0000000000000000000000000000000000000000',
+                '0x0000000000000000000000000000000000000000',
+                signatures
+            ]
+        );
+
+        // Use tenderly, https://dashboard.tenderly.co/shared/simulation/f6442943-d768-4099-ae27-972d59c32ada
+        console.log('Transaction data for tenderly: ', gnosisExecTransactionFunctionData);
     });
 });
