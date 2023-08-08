@@ -62,7 +62,7 @@ interface IVault {
     ) external;
 
     struct ExitPoolRequest {
-        IAsset[] assets;
+        address[] assets;
         uint256[] minAmountsOut;
         bytes userData;
         bool toInternalBalance;
