@@ -1,11 +1,16 @@
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 
 // Artifacts
+import corevotingData from '../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json'
 import timelockData from '../../council/artifacts/contracts/features/Timelock.sol/Timelock.json'
-import coreVotingData from '../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json'
 
-// constants
-import { GSC_CALL_DATA, GSC_TREASURY_ADDRESS } from './constants';
+import {
+  FrozenLockingVaultProxy,
+  FrozenVestingVaultProxy,
+  CoreVoting,
+} from '../helpers/addresses'
+
+import { YEARN_WITHDRAWAL_TRANSACTIONS } from './constants';
 
 // Helpers
 import * as addresses from '../helpers/addresses'
@@ -20,17 +25,26 @@ async function proposal() {
   // Setup your interfaces
   const timelockInterface = new ethers.utils.Interface(timelockData.abi) // TimeLock is like sudo, you always need it.
 
-  // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
+  // Connect the signer to the coreVotingContract, this is where your proposals will feed into.
   const coreVoting = new ethers.Contract(
-    addresses.GSCCoreVoting,
-    coreVotingData.abi,
+    CoreVoting,
+    corevotingData.abi,
     signer
   )
 
   // --- main egp logic ---
   /**
-   * Withdraws 17 balancer pool positions, redeems the PT then transfers to the main treasury
+   * Withdraw from 8 yearn positions 
    */
+
+  const callData = [];
+  const targets = [];
+
+  for (let i in YEARN_WITHDRAWAL_TRANSACTIONS) {
+    callData.push(YEARN_WITHDRAWAL_TRANSACTIONS[i].data)
+    targets.push(YEARN_WITHDRAWAL_TRANSACTIONS[i].to)
+  }
+
 
   /**
    * Take the calldata and convert it to the callhash.
@@ -39,10 +53,9 @@ async function proposal() {
    * Notes:
    * - You can pass in as many "chained calls" as you like, just match the calldata to the addresses in the two parameters.
    */
-
   const callHash = await createCallHash(
-    [GSC_CALL_DATA], // It is a multisend call through the gnosis safe treasury
-    [GSC_TREASURY_ADDRESS] // Gnosis safe, GSC core voting is an owner of it
+    callData,
+    targets // each targets its respective proxy
   )
 
   /**
@@ -58,16 +71,16 @@ async function proposal() {
 
   /**
    * Creates the expiery for the proposal, no need to modify.
-   * Default: 7 days after the proposal begins (unit is block number)
+   * Default: 14 days after the proposal begins (unit is block number)
    */
-  const expiryDate = await getExpiry(ethers.provider)
+  const expiryDate = await getExpiry(signer.provider!, 14)
 
   /**
    * The coreVoting contract registers the call with the timelock
    * - Supply all the vaults where you wish voting power to originate from.
    */
   const tx = await coreVoting.proposal(
-    [addresses.GSCVault], // Forzen vaults because all ELFI lives there
+    [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
     ['0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
@@ -79,16 +92,17 @@ async function proposal() {
 
   await tx.wait()
 
-  // need these values to execute from the timelock after lock duration, please keep record of them.
   console.log({
-    GSC_CALL_DATA,
-    calldataCv,
+    callData,
+    targets,
     callHash,
+    calldataCv,
+    proposal: tx.data,
   })
 }
 
 async function main() {
-  const result = await proposal()
+  await proposal()
 }
 
 main()
