@@ -48,7 +48,7 @@ async function proposal() {
   /**
    * Encode proposal to be sent to the core voting contract
    * Notes:
-   * - Simple add the multiple call hashes into the array.
+   * - Simply add the multiple call hashes into the array.
    * - You can have multiple callHashes, if a proposal affects multiple different vaults or other DAO contracts.
    * - eg: Proposal updates a voting threshold, and moves funds from the treasury. This would be two callHashes.
    */
@@ -67,7 +67,7 @@ async function proposal() {
    * - Supply all the vaults where you wish voting power to originate from.
    */
   const tx = await coreVoting.proposal(
-    [addresses.GSCVault], // Forzen vaults because all ELFI lives there
+    [addresses.GSCVault], // Frozen vaults because all ELFI lives there
     ['0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data

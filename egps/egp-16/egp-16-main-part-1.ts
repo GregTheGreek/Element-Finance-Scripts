@@ -48,7 +48,7 @@ async function proposal() {
 
   /**
    * Take the calldata and convert it to the callhash.
-   * Param BytesLike[] - An arrary of encoded calldata
+   * Param BytesLike[] - An array of encoded calldata
    * Param string[] - An array of addresses, index must match that from the first parameter
    * Notes:
    * - You can pass in as many "chained calls" as you like, just match the calldata to the addresses in the two parameters.
@@ -70,7 +70,7 @@ async function proposal() {
   ])
 
   /**
-   * Creates the expiery for the proposal, no need to modify.
+   * Creates the expiry for the proposal, no need to modify.
    * Default: 14 days after the proposal begins (unit is block number)
    */
   const expiryDate = await getExpiry(signer.provider!, 14)
@@ -80,7 +80,7 @@ async function proposal() {
    * - Supply all the vaults where you wish voting power to originate from.
    */
   const tx = await coreVoting.proposal(
-    [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Forzen vaults because all ELFI lives there
+    [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Frozen vaults because all ELFI lives there
     ['0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
