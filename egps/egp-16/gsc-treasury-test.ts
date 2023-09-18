@@ -1,7 +1,7 @@
 import { expect, assert } from "chai";
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { network, ethers } from 'hardhat'
-import { encodeSingle, encodeMulti } from 'ethers-multisend';
+import { encodeMulti } from 'ethers-multisend';
 
 // Artifacts
 import iERC20 from '../../elf-contracts/artifacts/contracts/libraries/ERC20PermitWithSupply.sol/ERC20PermitWithSupply.json'
@@ -184,6 +184,21 @@ describe("Run unwinding GSC treasury", function() {
                 signer
             );
 
+            // revoke approval
+            const revokeApproveBalVaultTxFunctionData = iERC20Interface.encodeFunctionData(
+                'approve', [
+                    BALANCER_VAULT_ADDRESS,
+                    0
+                ]
+            );
+            const revokeApproveBalVaultTxEncodedSingle = {
+                to: balancerPools[i].pool,
+                value: '0x00',
+                data: revokeApproveBalVaultTxFunctionData
+            };
+            const revokeApproveBalVaultTx = await lpTokenContract.approve(BALANCER_VAULT_ADDRESS, 0);
+            gasUsed = revokeApproveBalVaultTx.gasLimit.add(gasUsed);
+
             const approveTrancheTxFunctionData = iERC20Interface.encodeFunctionData(
                 'approve', [
                     balancerPools[i].tranche,
@@ -220,6 +235,21 @@ describe("Run unwinding GSC treasury", function() {
             console.log(`After redeem base token ${baseSymbol} balance: ${ethers.utils.formatUnits(newBaseBalance, baseDecimals)}`);
             totalGasUsed.push(gasUsed)
 
+            // revoke approval
+            const revokeApproveTrancheTxFunctionData = iERC20Interface.encodeFunctionData(
+                'approve', [
+                    balancerPools[i].tranche,
+                    0
+                ],
+            );
+            const revokeApproveTrancheTxEncodedSingle = {
+                to: balancerPools[i].withdraw.pt,
+                value: '0x00',
+                data: revokeApproveTrancheTxFunctionData
+            };
+            const revokeApproveTranchetx = await ptTokenContract.approve(balancerPools[i].tranche, 0);
+            gasUsed = gasUsed.add(revokeApproveTranchetx.gasLimit)
+
             const transferBaseTxFunctionData = iERC20Interface.encodeFunctionData(
                 'transfer', [
                     TREASURY_ADDRESS,
@@ -236,8 +266,10 @@ describe("Run unwinding GSC treasury", function() {
             // prepare all transactions for a gnosis multisend
             transactions.push(approveBalVaultTxEncodedSingle);
             transactions.push(exitBalancerPoolTxEncodedSingle);
+            transactions.push(revokeApproveBalVaultTxEncodedSingle);
             transactions.push(approveTrancheTxEncodedSingle);
             transactions.push(withdrawTrancheTxEncodedSingle);
+            transactions.push(revokeApproveTrancheTxEncodedSingle);
             transactions.push(transferBaseTxEncodedSingle);
 
             expect(ethers.utils.formatUnits(newPtBalance, ptDecimals)).to.equal("0.0");
