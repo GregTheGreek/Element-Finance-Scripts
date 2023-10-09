@@ -19,13 +19,7 @@ async function proposal() {
 
   // Setup your interfaces
   const timelockInterface = new ethers.utils.Interface(timelockData.abi) // TimeLock is like sudo, you always need it.
-
-  // Connect the signer to the coreVotingContract, this is where your proposals will fed into.
-  const coreVoting = new ethers.Contract(
-    addresses.GSCCoreVoting,
-    coreVotingData.abi,
-    signer
-  )
+  const coreVotingInterface = new ethers.utils.Interface(coreVotingData.abi)
 
   // --- main egp logic ---
   /**
@@ -66,24 +60,27 @@ async function proposal() {
    * The coreVoting contract registers the call with the timelock
    * - Supply all the vaults where you wish voting power to originate from.
    */
-  const tx = await coreVoting.proposal(
-    [addresses.GSCVault], // Frozen vaults because all ELFI lives there
-    ['0x'], // Extra data - typically 0x
-    [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
-    [calldataCv], // load in the call data
-    expiryDate, // Last call for proposal
-    0 // This is your vote. change if you please.
-  )
+  const callDataProposal = coreVotingInterface.encodeFunctionData('proposal', [
+    [addresses.GSCVault],
+    ['0x'],
+    [addresses.Timelock],
+    [calldataCv],
+    expiryDate,
+    0
+  ])
 
-  // --- end main EGP logic ---
-
-  await tx.wait()
+  const proposalTxEncoded = {
+    to: addresses.GSCCoreVoting,
+    value: '0x00',
+    data: callDataProposal
+  };
 
   // need these values to execute from the timelock after lock duration, please keep record of them.
   console.log({
     GSC_CALL_DATA,
     calldataCv,
     callHash,
+    proposalTxEncoded
   })
 }
 

@@ -24,6 +24,7 @@ async function proposal() {
 
   // Setup your interfaces
   const timelockInterface = new ethers.utils.Interface(timelockData.abi) // TimeLock is like sudo, you always need it.
+  const coreVotingInterface = new ethers.utils.Interface(corevotingData.abi)
 
   // Connect the signer to the coreVotingContract, this is where your proposals will feed into.
   const coreVoting = new ethers.Contract(
@@ -79,6 +80,21 @@ async function proposal() {
    * The coreVoting contract registers the call with the timelock
    * - Supply all the vaults where you wish voting power to originate from.
    */
+  const callDataProposal = coreVotingInterface.encodeFunctionData('proposal', [
+    [FrozenLockingVaultProxy, FrozenVestingVaultProxy],
+    ['0x'],
+    [addresses.Timelock],
+    [calldataCv],
+    expiryDate,
+    0
+  ])
+
+  const proposalTxEncoded = {
+    to: CoreVoting,
+    value: '0x00',
+    data: callDataProposal
+  };
+
   const tx = await coreVoting.proposal(
     [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Frozen vaults because all ELFI lives there
     ['0x'], // Extra data - typically 0x
@@ -88,16 +104,12 @@ async function proposal() {
     0 // This is your vote. change if you please.
   )
 
-  // --- end main EGP logic ---
-
-  await tx.wait()
-
   console.log({
     callData,
     targets,
     callHash,
     calldataCv,
-    proposal: tx.data,
+    proposalTxEncoded
   })
 }
 
