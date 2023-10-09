@@ -75,13 +75,11 @@ async function proposal() {
     data: callDataProposal
   };
 
-  // need these values to execute from the timelock after lock duration, please keep record of them.
-  console.log({
-    GSC_CALL_DATA,
-    calldataCv,
-    callHash,
-    proposalTxEncoded
-  })
+  // need these values to execute from the timelock after lock duration, please keep record of them.\
+  process.stdout.write(JSON.stringify(GSC_CALL_DATA) + '\n');
+  process.stdout.write(JSON.stringify(calldataCv) + '\n');
+  process.stdout.write(JSON.stringify(callHash) + '\n');
+  process.stdout.write(JSON.stringify(proposalTxEncoded));
 }
 
 async function main() {

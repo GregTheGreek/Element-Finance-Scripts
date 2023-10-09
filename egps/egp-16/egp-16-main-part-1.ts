@@ -26,13 +26,6 @@ async function proposal() {
   const timelockInterface = new ethers.utils.Interface(timelockData.abi) // TimeLock is like sudo, you always need it.
   const coreVotingInterface = new ethers.utils.Interface(corevotingData.abi)
 
-  // Connect the signer to the coreVotingContract, this is where your proposals will feed into.
-  const coreVoting = new ethers.Contract(
-    CoreVoting,
-    corevotingData.abi,
-    signer
-  )
-
   // --- main egp logic ---
   /**
    * Withdraw from 8 yearn positions 
@@ -81,12 +74,12 @@ async function proposal() {
    * - Supply all the vaults where you wish voting power to originate from.
    */
   const callDataProposal = coreVotingInterface.encodeFunctionData('proposal', [
-    [FrozenLockingVaultProxy, FrozenVestingVaultProxy],
-    ['0x'],
-    [addresses.Timelock],
-    [calldataCv],
-    expiryDate,
-    0
+    [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Frozen vaults because all ELFI lives there
+    ['0x'], // Extra data - typically 0x
+    [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
+    [calldataCv], // load in the call data
+    expiryDate, // Last call for proposal
+    0 // This is your vote. change if you please.
   ])
 
   const proposalTxEncoded = {
@@ -95,22 +88,12 @@ async function proposal() {
     data: callDataProposal
   };
 
-  const tx = await coreVoting.proposal(
-    [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Frozen vaults because all ELFI lives there
-    ['0x'], // Extra data - typically 0x
-    [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
-    [calldataCv], // load in the call data
-    expiryDate, // Last call for proposal
-    0 // This is your vote. change if you please.
-  )
-
-  console.log({
-    callData,
-    targets,
-    callHash,
-    calldataCv,
-    proposalTxEncoded
-  })
+  // need these values to execute from the timelock after lock duration, please keep record of them.\
+  process.stdout.write(JSON.stringify(callData) + '\n');
+  process.stdout.write(JSON.stringify(targets) + '\n');
+  process.stdout.write(JSON.stringify(callHash) + '\n');
+  process.stdout.write(JSON.stringify(calldataCv) + '\n');
+  process.stdout.write(JSON.stringify(proposalTxEncoded));
 }
 
 async function main() {
