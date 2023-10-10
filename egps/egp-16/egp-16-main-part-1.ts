@@ -75,7 +75,7 @@ async function proposal() {
    */
   const callDataProposal = coreVotingInterface.encodeFunctionData('proposal', [
     [FrozenLockingVaultProxy, FrozenVestingVaultProxy], // Frozen vaults because all ELFI lives there
-    ['0x'], // Extra data - typically 0x
+    ['0x', '0x'], // Extra data - typically 0x
     [addresses.Timelock], // You always call the timelock, the timelock is "sudo" it controls the DAO contracts.
     [calldataCv], // load in the call data
     expiryDate, // Last call for proposal
