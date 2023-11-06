@@ -3,6 +3,7 @@ import { ethers, network } from 'hardhat'
 // Artifacts
 import corevotingData from '../../council/artifacts/contracts/CoreVoting.sol/CoreVoting.json'
 import timelockData from '../../council/artifacts/contracts/features/Timelock.sol/Timelock.json'
+import treasuryData from '../../council/artifacts/contracts/features/Treasury.sol/Treasury.json'
 
 import {
   FrozenLockingVaultProxy,
@@ -25,6 +26,7 @@ async function proposal() {
   // Setup your interfaces
   const timelockInterface = new ethers.utils.Interface(timelockData.abi) // TimeLock is like sudo, you always need it.
   const coreVotingInterface = new ethers.utils.Interface(corevotingData.abi)
+  const treasuryVotingInterface = new ethers.utils.Interface(treasuryData.abi)
 
   // --- main egp logic ---
   /**
@@ -35,8 +37,13 @@ async function proposal() {
   const targets = [];
 
   for (let i in YEARN_WITHDRAWAL_TRANSACTIONS) {
-    callData.push(YEARN_WITHDRAWAL_TRANSACTIONS[i].data)
-    targets.push(YEARN_WITHDRAWAL_TRANSACTIONS[i].to)
+    const treasuryCallData = treasuryVotingInterface.encodeFunctionData('genericCall', [
+      YEARN_WITHDRAWAL_TRANSACTIONS[i].to,
+      YEARN_WITHDRAWAL_TRANSACTIONS[i].data
+    ]);
+
+    callData.push(treasuryCallData)
+    targets.push(addresses.Treasury)
   }
 
 
