@@ -36,10 +36,10 @@ async function proposal() {
   const callData = [];
   const targets = [];
 
-  for (let i in YEARN_WITHDRAWAL_TRANSACTIONS) {
+  for (let i in YEARN_WITHDRAWAL_TRANSACTIONS_2) {
     const treasuryCallData = treasuryVotingInterface.encodeFunctionData('genericCall', [
-      YEARN_WITHDRAWAL_TRANSACTIONS[i].to,
-      YEARN_WITHDRAWAL_TRANSACTIONS[i].data
+      YEARN_WITHDRAWAL_TRANSACTIONS_2[i].to,
+      YEARN_WITHDRAWAL_TRANSACTIONS_2[i].data
     ]);
 
     callData.push(treasuryCallData)
