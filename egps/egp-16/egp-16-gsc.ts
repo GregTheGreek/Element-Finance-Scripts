@@ -26,29 +26,6 @@ async function proposal() {
    * Withdraws 17 balancer pool positions, redeems the PT then transfers to the main treasury
    */
 
-  /**
-   * Take the calldata and convert it to the callhash.
-   * Param BytesLike[] - An arrary of encoded calldata
-   * Param string[] - An array of addresses, index must match that from the first parameter
-   * Notes:
-   * - You can pass in as many "chained calls" as you like, just match the calldata to the addresses in the two parameters.
-   */
-
-  const callHash = await createCallHash(
-    [GSC_CALL_DATA], // It is a multisend call through the gnosis safe treasury
-    [GSC_TREASURY_ADDRESS] // Gnosis safe, GSC core voting is an owner of it
-  )
-
-  /**
-   * Encode proposal to be sent to the core voting contract
-   * Notes:
-   * - Simply add the multiple call hashes into the array.
-   * - You can have multiple callHashes, if a proposal affects multiple different vaults or other DAO contracts.
-   * - eg: Proposal updates a voting threshold, and moves funds from the treasury. This would be two callHashes.
-   */
-  const calldataCv = timelockInterface.encodeFunctionData('registerCall', [
-    callHash,
-  ])
 
   /**
    * Creates the expiery for the proposal, no need to modify.
@@ -56,30 +33,32 @@ async function proposal() {
    */
   const expiryDate = await getExpiry(ethers.provider)
 
-  /**
-   * The coreVoting contract registers the call with the timelock
-   * - Supply all the vaults where you wish voting power to originate from.
-   */
-  const callDataProposal = coreVotingInterface.encodeFunctionData('proposal', [
-    [addresses.GSCVault],
-    ['0x'],
-    [addresses.Timelock],
-    [calldataCv],
-    expiryDate,
-    0
-  ])
+  for (let i in GSC_CALL_DATA) {
+    /**
+     * The coreVoting contract registers the call with the timelock
+     * - Supply all the vaults where you wish voting power to originate from.
+     */
 
-  const proposalTxEncoded = {
-    to: addresses.GSCCoreVoting,
-    value: '0x00',
-    data: callDataProposal
-  };
+    const callDataProposal = coreVotingInterface.encodeFunctionData('proposal', [
+      [addresses.GSCVault],
+      ['0x'],
+      [GSC_TREASURY_ADDRESS],
+      [GSC_CALL_DATA[i]],
+      expiryDate,
+      0
+    ])
 
-  // need these values to execute from the timelock after lock duration, please keep record of them.\
-  process.stdout.write(JSON.stringify(GSC_CALL_DATA) + '\n');
-  process.stdout.write(JSON.stringify(calldataCv) + '\n');
-  process.stdout.write(JSON.stringify(callHash) + '\n');
-  process.stdout.write(JSON.stringify(proposalTxEncoded));
+    const proposalTxEncoded = {
+      to: addresses.GSCCoreVoting,
+      value: '0x00',
+      data: callDataProposal
+    };
+
+    // need these values to execute from the timelock after lock duration, please keep record of them.\
+    process.stdout.write(`transaction number: ${i}` + '\n');
+    process.stdout.write(GSC_CALL_DATA[i] + '\n');
+    process.stdout.write(JSON.stringify(proposalTxEncoded) + '\n');
+  }
 }
 
 async function main() {
