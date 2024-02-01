@@ -11,7 +11,7 @@ import {
   CoreVoting,
 } from '../helpers/addresses'
 
-import { YEARN_WITHDRAWAL_TRANSACTIONS_1 } from './constants';
+import { YEARN_WITHDRAWAL_TRANSACTIONS_2 } from './constants';
 
 // Helpers
 import * as addresses from '../helpers/addresses'
@@ -36,10 +36,10 @@ async function proposal() {
   const callData = [];
   const targets = [];
 
-  for (let i in YEARN_WITHDRAWAL_TRANSACTIONS_1) {
+  for (let i in YEARN_WITHDRAWAL_TRANSACTIONS_2) {
     const treasuryCallData = treasuryVotingInterface.encodeFunctionData('genericCall', [
-      YEARN_WITHDRAWAL_TRANSACTIONS_1[i].to,
-      YEARN_WITHDRAWAL_TRANSACTIONS_1[i].data
+      YEARN_WITHDRAWAL_TRANSACTIONS_2[i].to,
+      YEARN_WITHDRAWAL_TRANSACTIONS_2[i].data
     ]);
 
     callData.push(treasuryCallData)

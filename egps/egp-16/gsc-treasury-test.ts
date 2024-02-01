@@ -276,25 +276,47 @@ describe("Run unwinding GSC treasury", function() {
         }
 
         console.log('Total Gas Used, LP withdraw and Redeem: ', totalGasUsed);
-        const encodedMulti = encodeMulti(transactions, MULTISEND_ADDRESS);
-        const signatures = "0x" + "000000000000000000000000" + GSC_CORE_VOTING_ADDRESS.replace('0x', '') + "0000000000000000000000000000000000000000000000000000000000000000" + "01";
 
-        const gnosisExecTransactionFunctionData = safeContractInterface.encodeFunctionData(
-            'execTransaction', [
-                MULTISEND_ADDRESS,
-                0,
-                encodedMulti.data,
-                1,
-                0,
-                0,
-                0,
-                '0x0000000000000000000000000000000000000000',
-                '0x0000000000000000000000000000000000000000',
-                signatures
-            ]
-        );
+        console.log('amount of transactions: ', transactions.length);
+
+        // Split into 7 separate transactions
+        const gonsisExecTransactionsFunctionData = [];
+        const transactionSplitInterval = 7;
+
+        for (let i = 0; i < transactionSplitInterval; i++) {
+            const transactionsCount = transactions.length;
+            const transactionsIntervalcount = transactionsCount/transactionSplitInterval;
+
+            // make sure it is an integer
+            expect(transactionsIntervalcount % 1).to.equal(0);
+
+            const transactionsList = transactions.slice(i * transactionsIntervalcount, (i * transactionsIntervalcount) + transactionsIntervalcount);
+            console.log(i * transactionsIntervalcount);
+            console.log((i * transactionsIntervalcount) + transactionsIntervalcount);
+            console.log('Transactions in interval: ', transactionsList.length);
+
+            const encodedMulti = encodeMulti(transactionsList, MULTISEND_ADDRESS);
+            const signatures = "0x" + "000000000000000000000000" + GSC_CORE_VOTING_ADDRESS.replace('0x', '') + "0000000000000000000000000000000000000000000000000000000000000000" + "01";
+
+            const gnosisExecTransactionFunctionData = safeContractInterface.encodeFunctionData(
+                'execTransaction', [
+                    MULTISEND_ADDRESS,
+                    0,
+                    encodedMulti.data,
+                    1,
+                    0,
+                    0,
+                    0,
+                    '0x0000000000000000000000000000000000000000',
+                    '0x0000000000000000000000000000000000000000',
+                    signatures
+                ]
+            );
+
+            gonsisExecTransactionsFunctionData.push(gnosisExecTransactionFunctionData);
+        }
 
         // Use tenderly, https://dashboard.tenderly.co/shared/simulation/f6442943-d768-4099-ae27-972d59c32ada
-        console.log('Transaction data for tenderly: ', gnosisExecTransactionFunctionData);
-    });
+        console.log(`Transaction data for tenderly`, gonsisExecTransactionsFunctionData);
+        });
 });
