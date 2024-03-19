@@ -14,6 +14,8 @@ export const crvPools = [
         pool: '0xd51a44d3fae010294c616388b506acda1bfaae46',
         isInt128: false,
         withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+        slippage: '0.8',
+        isEth: false,
     },
     // alusd3crv-f -> 3crv
     // curve pool = https://etherscan.io/address/0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c#readContract
@@ -24,6 +26,8 @@ export const crvPools = [
         isInt128: true,
         withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
         isMetaPool: true,
+        slippage: '0.9',
+        isEth: false,
     },
     // eurscrv -> eurs
     // curve pool = https://etherscan.io/address/0x0ce6a5ff5217e38315f87032cf90686c96627caa#readContract
@@ -33,6 +37,8 @@ export const crvPools = [
         pool: '0x0ce6a5ff5217e38315f87032cf90686c96627caa',
         isInt128: true,
         withdrawn: '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+        slippage: '0.9',
+        isEth: false,
     },
     // lusd3crv-f -> 3crv
     // curve pool = https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca#readContract
@@ -43,6 +49,8 @@ export const crvPools = [
         isInt128: true,
         withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
         isMetaPool: true,
+        slippage: '0.9',
+        isEth: false,
     },
     // mim-3lp3crv-f -> 3crv
     // curve pool = https://etherscan.io/address/0x5a6a4d54456819380173272a5e8e9b9904bdf41b#readContract
@@ -53,6 +61,8 @@ export const crvPools = [
         isInt128: true,
         withdrawn: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
         isMetaPool: true,
+        slippage: '0.9',
+        isEth: false,
     },
     // stecrv -> eth
     // curve pool = https://etherscan.io/address/0xdc24316b9ae028f1497c275eb9192a3ea0f67022#readContract
@@ -61,17 +71,19 @@ export const crvPools = [
         i: 0,
         pool: '0xdc24316b9ae028f1497c275eb9192a3ea0f67022',
         isInt128: true,
-        withdrawn: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+        slippage: '0.9',
+        isEth: true,
     },
     // crvTricrypto -> weth
     // curve pool = https://etherscan.io/address/0x3993d34e7e99abf6b6f367309975d1360222d446#readContract
     // i = 0, weth
-    {
-        i: 2,
-        pool: '0x3993d34e7e99abf6b6f367309975d1360222d446',
-        isInt128: false,
-        withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-    }
+    // {
+    //     i: 2,
+    //     pool: '0x3993d34e7e99abf6b6f367309975d1360222d446',
+    //     isInt128: false,
+    //     withdrawn: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    // }
 ];
 
 // Withdraw from the appropriate Yearn Vaults
@@ -363,6 +375,39 @@ export const YEARN_WITHDRAWAL_TRANSACTIONS_2 = [
         to: '0xdA816459F1AB5631232FE5e97a05BBBb94970c95',
         value: '0x00',
         data: '0xe63697c8000000000000000000000000000000000000000000000284a6dad950dab4958000000000000000000000000082ef450fb7f06e3294f2f19ed1713b255af0f54100000000000000000000000000000000000000000000000000000000000003e8'
+    }
+];
+
+export const CRV_WITHDRAWAL_TRANSACTIONS = [
+    {
+      to: '0xd51a44d3fae010294c616388b506acda1bfaae46',
+      value: '0x00',
+      data: '0xf1dc3cc900000000000000000000000000000000000000000000000071eede152bc3bda6000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000033486dfa40130a6e'
+    },
+    {
+      to: '0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c',
+      value: '0x00',
+      data: '0x1a4d01d2000000000000000000000000000000000000000000000246bbcd11b37a9a9e8400000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000001ff279b88c4f8a17fdc'
+    },
+    {
+      to: '0x0ce6a5ff5217e38315f87032cf90686c96627caa',
+      value: '0x00',
+      data: '0x1a4d01d2000000000000000000000000000000000000000000000029d98c95582170c26b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011116'
+    },
+    {
+      to: '0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca',
+      value: '0x00',
+      data: '0x1a4d01d2000000000000000000000000000000000000000000000b4bc8f76e9ed78ab7400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000a28387f8784a523f9e1'
+    },
+    {
+      to: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
+      value: '0x00',
+      data: '0x1a4d01d20000000000000000000000000000000000000000000006886ad7f7ff3fa3118600000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000005b441506d2051fc1fdd'
+    },
+    {
+      to: '0xdc24316b9ae028f1497c275eb9192a3ea0f67022',
+      value: '0x00',
+      data: '0x1a4d01d200000000000000000000000000000000000000000000000136fe0432b03107a900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000013110c0d2456a771f'
     }
 ];
 
