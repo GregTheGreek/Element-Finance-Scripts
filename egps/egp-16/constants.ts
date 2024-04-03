@@ -86,6 +86,21 @@ export const crvPools = [
     // }
 ];
 
+export const crvPools_2 = [
+    // 3Crv -> weth
+    // curve pool = https://etherscan.io/address/0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7
+    // i = 1, usdc = https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+    {
+        i: 1,
+        token: '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+        pool: '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+        isInt128: true,
+        withdrawn: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        slippage: '0.99',
+        isEth: false,
+    }
+];
+
 // Withdraw from the appropriate Yearn Vaults
 export const yearnPools = [
     {
@@ -408,6 +423,14 @@ export const CRV_WITHDRAWAL_TRANSACTIONS = [
       to: '0xdc24316b9ae028f1497c275eb9192a3ea0f67022',
       value: '0x00',
       data: '0x1a4d01d200000000000000000000000000000000000000000000000136fe0432b03107a900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000013110c0d2456a771f'
+    }
+];
+
+export const CRV_WITHDRAWAL_TRANSACTIONS_2 = [
+    {
+        to: '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+        value: '0x00',
+        data: '0x1a4d01d20000000000000000000000000000000000000000000013d8a7c20694da0b081400000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000001647ed1804'
     }
 ];
 
